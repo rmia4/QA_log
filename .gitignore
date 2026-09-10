@@ -1,0 +1,13 @@
+target/
+*.class
+*.log
+.idea/
+*.iml
+.settings/
+.project
+.classpath
+.vscode/
+.DS_Store
+
+# DB 접속정보 등 민감 설정 - db.properties.example만 커밋하고 실제 db.properties는 각자 로컬에 생성
+src/main/resources/db.properties

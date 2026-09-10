@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.project.mapper.ProjectMapper">
+
+    <resultMap id="projectResultMap" type="egovframework.project.vo.ProjectVO">
+        <id     column="id"          property="id" />
+        <result column="name"        property="name" />
+        <result column="created_by"  property="createdBy" />
+        <result column="created_at"  property="createdAt" />
+        <result column="updated_at"  property="updatedAt" />
+        <result column="open_issue_count" property="openIssueCount" />
+    </resultMap>
+
+    <select id="selectProjectList" resultMap="projectResultMap">
+        SELECT
+            p.id, p.name, p.created_by, p.created_at, p.updated_at,
+            (SELECT COUNT(*) FROM issues i WHERE i.project_id = p.id AND i.status != 'closed') AS open_issue_count
+        FROM projects p
+        ORDER BY p.created_at DESC
+    </select>
+
+    <select id="selectProject" parameterType="long" resultMap="projectResultMap">
+        SELECT id, name, created_by, created_at, updated_at, 0 AS open_issue_count
+        FROM projects
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insertProject" parameterType="egovframework.project.vo.ProjectVO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO projects (name, created_by)
+        VALUES (#{name}, #{createdBy})
+    </insert>
+
+</mapper>
