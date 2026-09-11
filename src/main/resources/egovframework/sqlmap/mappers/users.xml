@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="egovframework.user.mapper.UserMapper">
-    <!-- TODO: 가입/로그인 구현 시 쿼리 추가 -->
+    <!-- TODO: 가입/로그인 구현 시 selectByLoginId, insertUser 등 쿼리 추가 -->
+
+    <select id="selectDisplayName" parameterType="long" resultType="string">
+        SELECT display_name FROM users WHERE id = #{id}
+    </select>
+
+    <select id="selectAllForOptions" resultMap="userOptionResultMap">
+        SELECT id, display_name FROM users ORDER BY display_name
+    </select>
+
+    <resultMap id="userOptionResultMap" type="egovframework.user.vo.UserVO">
+        <id     column="id" property="id" />
+        <result column="display_name" property="displayName" />
+    </resultMap>
 </mapper>
