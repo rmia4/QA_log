@@ -46,6 +46,7 @@ public class LoginController {
             oldSession.invalidate();
         }
         HttpSession session = request.getSession(true);
+        session.setMaxInactiveInterval(SessionKeys.LOGIN_SESSION_SECONDS);
         session.setAttribute(SessionKeys.LOGIN_USER_ID, user.getId());
         session.setAttribute("loginDisplayName", user.getDisplayName());
         return "redirect:/";

@@ -1,5 +1,6 @@
 package egovframework.login;
 
+import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
@@ -12,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
@@ -51,13 +53,16 @@ public class LoginControllerTest {
 
     @Test
     public void validCredentialsCreateLoginSession() throws Exception {
-        mockMvc.perform(post("/login")
+        MvcResult result = mockMvc.perform(post("/login")
                 .param("login_id", "  tester  ")
                 .param("password", "correct-password"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"))
                 .andExpect(request().sessionAttribute(SessionKeys.LOGIN_USER_ID, 7L))
-                .andExpect(request().sessionAttribute("loginDisplayName", "테스터"));
+                .andExpect(request().sessionAttribute("loginDisplayName", "테스터"))
+                .andReturn();
+
+        assertEquals(2592000, result.getRequest().getSession(false).getMaxInactiveInterval());
     }
 
     @Test
@@ -81,6 +86,11 @@ public class LoginControllerTest {
         @Override
         public UserVO selectByLoginId(String loginId) {
             return user.getLoginId().equals(loginId) ? user : null;
+        }
+
+        @Override
+        public void insertUser(UserVO user) {
+            throw new UnsupportedOperationException();
         }
 
         @Override

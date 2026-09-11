@@ -1,0 +1,9 @@
+-- Supabase SQL Editor에서 실행하기 전에 CHANGE_ME를 팀에서 사용할 초대코드로 바꾸세요.
+-- 이 파일은 예시이며 실제 초대코드는 Git에 커밋하지 않습니다.
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+DELETE FROM team_settings;
+
+INSERT INTO team_settings (invite_code_hash)
+VALUES (crypt('CHANGE_ME', gen_salt('bf', 10)));

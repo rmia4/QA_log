@@ -16,6 +16,12 @@
         WHERE login_id = #{loginId}
     </select>
 
+    <insert id="insertUser" parameterType="egovframework.user.vo.UserVO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (login_id, password_hash, display_name)
+        VALUES (#{loginId}, #{passwordHash}, #{displayName})
+    </insert>
+
     <select id="selectDisplayName" parameterType="long" resultType="string">
         SELECT display_name FROM users WHERE id = #{id}
     </select>

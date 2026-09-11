@@ -47,6 +47,11 @@
                     <button class="login-button" type="submit">로그인</button>
                 </form>
 
+                <div class="account-link">
+                    <span>처음 이용하시나요?</span>
+                    <a href="<c:url value='/signup' />">회원가입</a>
+                </div>
+
                 <p class="team-note"><span aria-hidden="true"></span>팀에서 만든 계정으로 로그인하세요.</p>
             </div>
         </section>

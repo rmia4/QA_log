@@ -71,6 +71,10 @@ body {
     box-shadow: 0 14px 45px rgba(30, 50, 80, 0.08);
 }
 
+.signup-card {
+    max-width: 460px;
+}
+
 .card-accent {
     height: 4px;
     background: #2563eb;
@@ -159,9 +163,30 @@ input:focus {
 }
 
 .login-button:focus-visible,
-.brand:focus-visible {
+.brand:focus-visible,
+.account-link a:focus-visible {
     outline: 3px solid #93b4ff;
     outline-offset: 3px;
+}
+
+.account-link {
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    color: #69778c;
+    font-size: 13px;
+}
+
+.account-link a {
+    color: #2563eb;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.account-link a:hover {
+    text-decoration: underline;
 }
 
 .team-note {
