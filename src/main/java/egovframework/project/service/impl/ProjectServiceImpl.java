@@ -22,6 +22,11 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public ProjectVO getProject(Long id) {
+        return projectMapper.selectProject(id);
+    }
+
+    @Override
     public ProjectVO createProject(String name, Long createdBy) {
         ProjectVO project = new ProjectVO();
         project.setName(normalizeName(name));

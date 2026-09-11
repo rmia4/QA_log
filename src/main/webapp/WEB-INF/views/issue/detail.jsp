@@ -301,7 +301,7 @@
                 <c:choose>
                   <c:when test="${h.eventType == 'created'}"><b>${h.actorName}</b>님이 오류를 등록했습니다</c:when>
                   <c:when test="${h.eventType == 'attachment_added'}"><b>${h.actorName}</b>님이 스크린샷을 첨부했습니다</c:when>
-                  <c:when test="${h.eventType == 'field_changed'}"><b>${h.actorName}</b>님이 ${h.fieldLabel}을(를) ${empty h.oldValue ? '미지정' : h.oldValue} → ${empty h.newValue ? '미지정' : h.newValue}(으)로 변경</c:when>
+                  <c:when test="${h.eventType == 'field_changed'}"><b>${h.actorName}</b>님이 ${h.fieldLabel}${h.fieldJosaEul} ${h.oldValueDisplay} → ${h.newValueDisplay}${h.newValueJosaRo} 변경</c:when>
                   <c:otherwise>${h.eventType}</c:otherwise>
                 </c:choose>
               </span>

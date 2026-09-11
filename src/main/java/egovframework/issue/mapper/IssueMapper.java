@@ -36,10 +36,4 @@ public interface IssueMapper {
 
     int reopenIssue(@Param("id") Long id, @Param("updatedBy") Long updatedBy,
             @Param("expectedUpdatedAt") LocalDateTime expectedUpdatedAt);
-
-    /**
-     * issue_number를 id와 동일한 값으로 맞춘다(오류등록_기능명세서.md 2.2 채번 방식 기본안).
-     * insertIssue 직후 한 번만 호출한다.
-     */
-    void syncIssueNumber(Long id);
 }

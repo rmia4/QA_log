@@ -8,6 +8,8 @@ public interface ProjectService {
 
     List<ProjectVO> getProjectList();
 
+    ProjectVO getProject(Long id);
+
     ProjectVO createProject(String name, Long createdBy);
 
     void updateProject(Long id, String name);

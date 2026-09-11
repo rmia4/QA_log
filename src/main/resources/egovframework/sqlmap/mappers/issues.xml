@@ -94,10 +94,6 @@
         )
     </insert>
 
-    <update id="syncIssueNumber" parameterType="long">
-        UPDATE issues SET issue_number = id WHERE id = #{id}
-    </update>
-
     <update id="updateIssueFields">
         UPDATE issues SET
             title = #{issue.title},

@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+<!-- Servlet 3.0(Tomcat 7 실제 구현 버전)으로 선언 - 3.1로 선언하면 mvn tomcat7:run 실행 시
+     ClassCastException이 난다(pom.xml의 javax.servlet-api 버전 조정 사유 참고) -->
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
-                              http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
-         version="3.1">
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+                              http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0">
 
     <display-name>QA로그</display-name>
 
