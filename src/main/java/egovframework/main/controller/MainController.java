@@ -27,6 +27,8 @@ public class MainController {
     @GetMapping("/")
     public String main(@RequestParam(value = "projectId", required = false) Long projectId,
             @RequestParam(value = "view", required = false, defaultValue = "active") String view,
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "direction", required = false) String direction,
             Model model, HttpSession session) {
         if (session.getAttribute(SessionKeys.LOGIN_USER_ID) == null) {
             return "redirect:/login";
@@ -35,14 +37,18 @@ public class MainController {
         List<ProjectVO> projects = projectService.getProjectList();
         model.addAttribute("projects", projects);
         String listMode = "closed".equals(view) ? "closed" : "active";
+        String sortMode = "createdAt".equals(sort) ? "createdAt" : "severity";
+        String sortDirection = "asc".equals(direction) ? "asc" : "desc";
         model.addAttribute("listMode", listMode);
+        model.addAttribute("sort", sortMode);
+        model.addAttribute("direction", sortDirection);
 
         if (!projects.isEmpty()) {
             ProjectVO selectedProject = findSelectedProject(projects, projectId);
             model.addAttribute("selectedProjectId", selectedProject.getId());
             model.addAttribute("selectedProject", selectedProject);
             model.addAttribute("issues", issueListService.getIssueList(
-                    selectedProject.getId(), "closed".equals(listMode)));
+                    selectedProject.getId(), "closed".equals(listMode), sortMode, sortDirection));
         }
         return "main/main";
     }

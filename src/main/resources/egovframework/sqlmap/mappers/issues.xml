@@ -11,12 +11,13 @@
         <result column="severity"      property="severity" />
         <result column="priority"      property="priority" />
         <result column="assignee_name" property="assigneeName" />
+        <result column="created_at"    property="createdAt" />
         <result column="updated_at"    property="updatedAt" />
     </resultMap>
 
     <select id="selectIssueList" resultMap="issueListResultMap">
         SELECT i.id, i.issue_number, i.project_id, i.title, i.status, i.severity, i.priority,
-               u.display_name AS assignee_name, i.updated_at
+               u.display_name AS assignee_name, i.created_at, i.updated_at
         FROM issues i
         LEFT JOIN users u ON u.id = i.assignee_id
         WHERE i.project_id = #{projectId}
@@ -28,7 +29,24 @@
                 AND i.status != 'closed'
             </otherwise>
         </choose>
-        ORDER BY i.updated_at DESC, i.id DESC
+        ORDER BY
+        <choose>
+            <when test="sort == 'createdAt'">i.created_at</when>
+            <otherwise>
+                CASE i.severity
+                    WHEN 'critical' THEN 4
+                    WHEN 'high' THEN 3
+                    WHEN 'medium' THEN 2
+                    WHEN 'low' THEN 1
+                    ELSE 0
+                END
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="direction == 'asc'">ASC</when>
+            <otherwise>DESC</otherwise>
+        </choose>,
+        i.id DESC
     </select>
 
     <resultMap id="issueDetailResultMap" type="egovframework.issue.dto.IssueDetailResponseDTO">

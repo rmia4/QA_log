@@ -39,6 +39,8 @@
                     <c:url var="projectUrl" value="/">
                         <c:param name="projectId" value="${project.id}" />
                         <c:param name="view" value="${listMode}" />
+                        <c:param name="sort" value="${sort}" />
+                        <c:param name="direction" value="${direction}" />
                     </c:url>
                     <a class="project-item ${project.id == selectedProjectId ? 'is-selected' : ''}"
                        href="${projectUrl}" ${project.id == selectedProjectId ? 'aria-current="page"' : ''}>
@@ -97,17 +99,43 @@
                             <c:url var="activeUrl" value="/">
                                 <c:param name="projectId" value="${selectedProjectId}" />
                                 <c:param name="view" value="active" />
+                                <c:param name="sort" value="${sort}" />
+                                <c:param name="direction" value="${direction}" />
                             </c:url>
                             <c:url var="closedUrl" value="/">
                                 <c:param name="projectId" value="${selectedProjectId}" />
                                 <c:param name="view" value="closed" />
+                                <c:param name="sort" value="${sort}" />
+                                <c:param name="direction" value="${direction}" />
                             </c:url>
                             <a href="${activeUrl}" class="tab ${listMode == 'active' ? 'is-active' : ''}" role="tab"
                                aria-selected="${listMode == 'active'}">진행 중</a>
                             <a href="${closedUrl}" class="tab ${listMode == 'closed' ? 'is-active' : ''}" role="tab"
                                aria-selected="${listMode == 'closed'}">종료됨</a>
                         </div>
-                        <span class="result-count">총 ${fn:length(issues)}건</span>
+                        <div class="issue-toolbar-meta">
+                            <div class="sort-controls" aria-label="오류 목록 정렬">
+                                <c:url var="severitySortUrl" value="/">
+                                    <c:param name="projectId" value="${selectedProjectId}" />
+                                    <c:param name="view" value="${listMode}" />
+                                    <c:param name="sort" value="severity" />
+                                    <c:param name="direction" value="${sort == 'severity' && direction == 'desc' ? 'asc' : 'desc'}" />
+                                </c:url>
+                                <c:url var="createdAtSortUrl" value="/">
+                                    <c:param name="projectId" value="${selectedProjectId}" />
+                                    <c:param name="view" value="${listMode}" />
+                                    <c:param name="sort" value="createdAt" />
+                                    <c:param name="direction" value="${sort == 'createdAt' && direction == 'desc' ? 'asc' : 'desc'}" />
+                                </c:url>
+                                <a class="sort-button ${sort == 'severity' ? 'is-active' : ''}" href="${severitySortUrl}">
+                                    심각도 <span aria-hidden="true">${sort == 'severity' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
+                                </a>
+                                <a class="sort-button ${sort == 'createdAt' ? 'is-active' : ''}" href="${createdAtSortUrl}">
+                                    추가 날짜 <span aria-hidden="true">${sort == 'createdAt' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
+                                </a>
+                            </div>
+                            <span class="result-count">총 ${fn:length(issues)}건</span>
+                        </div>
                     </div>
 
                     <div class="issue-table-wrap">
@@ -119,7 +147,7 @@
                                     <th>상태</th>
                                     <th>심각도</th>
                                     <th>담당자</th>
-                                    <th>최근 수정</th>
+                                    <th>${sort == 'createdAt' ? '등록일' : '최근 수정'}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -154,7 +182,7 @@
                                             </span>
                                         </td>
                                         <td><c:out value="${empty issue.assigneeName ? '미지정' : issue.assigneeName}" /></td>
-                                        <td class="updated-at"><c:out value="${issue.updatedAt}" /></td>
+                                        <td class="updated-at"><c:out value="${sort == 'createdAt' ? issue.createdAt : issue.updatedAt}" /></td>
                                     </tr>
                                 </c:forEach>
                             </tbody>
