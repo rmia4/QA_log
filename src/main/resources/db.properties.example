@@ -1,5 +1,8 @@
 # 복사해서 db.properties로 저장한 뒤 실제 값을 채워넣으세요. db.properties는 .gitignore에 등록되어 git에 올라가지 않습니다.
-jdbc.driver=com.mysql.cj.jdbc.Driver
-jdbc.url=jdbc:mysql://localhost:3306/qalog?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
-jdbc.username=qalog
+#
+# Supabase 프로젝트 대시보드 -> Project Settings -> Database -> Connection string(JDBC/URI)에서
+# 정확한 host를 그대로 복사해 쓰세요(직접 연결 기준 포트 5432). 아래는 형태 예시입니다.
+jdbc.driver=org.postgresql.Driver
+jdbc.url=jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres?sslmode=require
+jdbc.username=postgres
 jdbc.password=
