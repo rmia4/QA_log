@@ -1,7 +1,10 @@
 package egovframework.user.mapper;
 
-/**
- * TODO: 가입/로그인 구현 시 selectByLoginId, insertUser 등 추가하고 users.xml에 쿼리 작성.
- */
+import org.apache.ibatis.annotations.Param;
+
+import egovframework.user.vo.UserVO;
+
 public interface UserMapper {
+
+    UserVO selectByLoginId(@Param("loginId") String loginId);
 }
