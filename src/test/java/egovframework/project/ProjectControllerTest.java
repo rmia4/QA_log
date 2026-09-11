@@ -1,13 +1,10 @@
 package egovframework.project;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static java.util.Collections.emptyList;
+import static org.junit.Assert.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import java.util.List;
 
@@ -19,8 +16,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import egovframework.common.SessionKeys;
-import egovframework.issue.dto.IssueListItemDTO;
-import egovframework.issue.service.IssueListService;
 import egovframework.project.controller.ProjectController;
 import egovframework.project.service.ProjectService;
 import egovframework.project.vo.ProjectVO;
@@ -28,110 +23,105 @@ import egovframework.project.vo.ProjectVO;
 public class ProjectControllerTest {
 
     private MockMvc mockMvc;
-    private List<IssueListItemDTO> activeIssues;
-    private List<IssueListItemDTO> closedIssues;
+    private RecordingProjectService projectService;
 
     @Before
     public void setUp() {
-        IssueListItemDTO activeIssue = new IssueListItemDTO();
-        activeIssue.setId(202L);
-        activeIssue.setTitle("로그인 버튼 오류");
-        activeIssues = singletonList(activeIssue);
-
-        IssueListItemDTO closedIssue = new IssueListItemDTO();
-        closedIssue.setId(203L);
-        closedIssue.setTitle("종료된 오류");
-        closedIssues = singletonList(closedIssue);
-
+        projectService = new RecordingProjectService();
         ProjectController controller = new ProjectController();
-        ReflectionTestUtils.setField(controller, "projectService", new ProjectFixturesService());
-        ReflectionTestUtils.setField(controller, "issueListService", new IssueListFixturesService());
+        ReflectionTestUtils.setField(controller, "projectService", projectService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
     @Test
-    public void anonymousVisitorIsRedirectedToLogin() throws Exception {
-        mockMvc.perform(get("/"))
+    public void anonymousVisitorCannotCreateProject() throws Exception {
+        mockMvc.perform(post("/projects").param("name", "새 프로젝트"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"));
     }
 
     @Test
-    public void loggedInVisitorSeesProjectsAndFirstProjectIsSelected() throws Exception {
-        MockHttpSession session = new MockHttpSession();
-        session.setAttribute(SessionKeys.LOGIN_USER_ID, 7L);
+    public void loggedInVisitorCreatesProject() throws Exception {
+        mockMvc.perform(post("/projects").param("name", "새 프로젝트").session(loggedInSession()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/?projectId=31"));
 
-        mockMvc.perform(get("/").session(session))
-                .andExpect(status().isOk())
-                .andExpect(view().name("main/main"))
-                .andExpect(model().attribute("selectedProjectId", 11L))
-                .andExpect(model().attributeExists("projects"))
-                .andExpect(request().sessionAttribute(SessionKeys.LOGIN_USER_ID, 7L));
+        assertEquals("새 프로젝트", projectService.createdName);
+        assertEquals(Long.valueOf(7L), projectService.createdBy);
     }
 
     @Test
-    public void requestedProjectIsSelected() throws Exception {
-        MockHttpSession session = new MockHttpSession();
-        session.setAttribute(SessionKeys.LOGIN_USER_ID, 7L);
+    public void loggedInVisitorUpdatesProject() throws Exception {
+        mockMvc.perform(post("/projects/22/edit")
+                .param("name", "수정한 프로젝트")
+                .session(loggedInSession()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/?projectId=22"));
 
-        mockMvc.perform(get("/").param("projectId", "22").session(session))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute("selectedProjectId", 22L));
+        assertEquals(Long.valueOf(22L), projectService.updatedId);
+        assertEquals("수정한 프로젝트", projectService.updatedName);
     }
 
     @Test
-    public void selectedProjectLoadsActiveIssues() throws Exception {
-        MockHttpSession session = new MockHttpSession();
-        session.setAttribute(SessionKeys.LOGIN_USER_ID, 7L);
+    public void projectWithoutIssuesCanBeDeleted() throws Exception {
+        projectService.deletable = true;
 
-        mockMvc.perform(get("/").param("projectId", "22").session(session))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute("listMode", "active"))
-                .andExpect(model().attribute("issues", activeIssues));
+        mockMvc.perform(post("/projects/22/delete").session(loggedInSession()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"));
+
+        assertEquals(Long.valueOf(22L), projectService.deletedId);
     }
 
     @Test
-    public void closedTabLoadsClosedIssues() throws Exception {
-        MockHttpSession session = new MockHttpSession();
-        session.setAttribute(SessionKeys.LOGIN_USER_ID, 7L);
+    public void projectWithIssuesIsKeptAndShowsReason() throws Exception {
+        projectService.deletable = false;
 
-        mockMvc.perform(get("/")
-                .param("projectId", "22")
-                .param("view", "closed")
-                .session(session))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute("listMode", "closed"))
-                .andExpect(model().attribute("issues", closedIssues));
+        mockMvc.perform(post("/projects/22/delete").session(loggedInSession()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/?projectId=22&projectDeleteError=hasIssues"));
+
+        assertEquals(Long.valueOf(22L), projectService.deletedId);
     }
 
-    private static final class ProjectFixturesService implements ProjectService {
+    private MockHttpSession loggedInSession() {
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(SessionKeys.LOGIN_USER_ID, 7L);
+        return session;
+    }
+
+    private static final class RecordingProjectService implements ProjectService {
+        private String createdName;
+        private Long createdBy;
+        private Long updatedId;
+        private String updatedName;
+        private Long deletedId;
+        private boolean deletable;
+
         @Override
         public List<ProjectVO> getProjectList() {
-            ProjectVO first = new ProjectVO();
-            first.setId(11L);
-            first.setName("첫 번째 프로젝트");
-            first.setOpenIssueCount(2L);
-
-            ProjectVO second = new ProjectVO();
-            second.setId(22L);
-            second.setName("두 번째 프로젝트");
-            second.setOpenIssueCount(0L);
-            return asList(first, second);
+            return emptyList();
         }
 
         @Override
         public ProjectVO createProject(String name, Long createdBy) {
-            throw new UnsupportedOperationException();
+            this.createdName = name;
+            this.createdBy = createdBy;
+            ProjectVO project = new ProjectVO();
+            project.setId(31L);
+            return project;
         }
-    }
 
-    private final class IssueListFixturesService implements IssueListService {
         @Override
-        public List<IssueListItemDTO> getIssueList(Long projectId, boolean closed) {
-            if (!Long.valueOf(22L).equals(projectId)) {
-                return java.util.Collections.emptyList();
-            }
-            return closed ? closedIssues : activeIssues;
+        public void updateProject(Long id, String name) {
+            updatedId = id;
+            updatedName = name;
+        }
+
+        @Override
+        public boolean deleteProject(Long id) {
+            deletedId = id;
+            return deletable;
         }
     }
 }

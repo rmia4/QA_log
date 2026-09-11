@@ -9,4 +9,8 @@ public interface ProjectService {
     List<ProjectVO> getProjectList();
 
     ProjectVO createProject(String name, Long createdBy);
+
+    void updateProject(Long id, String name);
+
+    boolean deleteProject(Long id);
 }

@@ -58,6 +58,27 @@
         </aside>
 
         <section class="issue-panel" aria-label="오류 목록">
+            <div class="project-actions-bar" aria-label="프로젝트 관리">
+                <button type="button" class="action-button action-button-primary"
+                        onclick="document.getElementById('createProjectDialog').showModal()">
+                    <span aria-hidden="true">＋</span> 프로젝트 생성
+                </button>
+                <c:if test="${not empty selectedProject}">
+                    <button type="button" class="action-button"
+                            onclick="document.getElementById('editProjectDialog').showModal()">수정</button>
+                    <form action="<c:url value='/projects/${selectedProject.id}/delete' />" method="post"
+                          onsubmit="return confirm('이 프로젝트를 삭제하시겠습니까?');">
+                        <button type="submit" class="action-button action-button-danger">삭제</button>
+                    </form>
+                </c:if>
+            </div>
+
+            <c:if test="${param.projectDeleteError == 'hasIssues'}">
+                <div class="page-alert" role="alert">
+                    등록된 오류가 있는 프로젝트는 삭제할 수 없습니다.
+                </div>
+            </c:if>
+
             <c:choose>
                 <c:when test="${not empty selectedProject}">
                     <div class="issue-heading">
@@ -155,5 +176,49 @@
             </c:choose>
         </section>
     </main>
+
+    <dialog id="createProjectDialog" class="project-dialog">
+        <form action="<c:url value='/projects' />" method="post">
+            <div class="dialog-heading">
+                <div>
+                    <span class="eyebrow">NEW PROJECT</span>
+                    <h2>프로젝트 생성</h2>
+                </div>
+                <button type="button" class="dialog-close"
+                        onclick="document.getElementById('createProjectDialog').close()" aria-label="닫기">×</button>
+            </div>
+            <label class="field-label" for="createProjectName">프로젝트명</label>
+            <input id="createProjectName" class="text-input" type="text" name="name"
+                   maxlength="200" required autocomplete="off" placeholder="프로젝트명을 입력하세요">
+            <div class="dialog-actions">
+                <button type="button" class="action-button"
+                        onclick="document.getElementById('createProjectDialog').close()">취소</button>
+                <button type="submit" class="action-button action-button-primary">생성</button>
+            </div>
+        </form>
+    </dialog>
+
+    <c:if test="${not empty selectedProject}">
+        <dialog id="editProjectDialog" class="project-dialog">
+            <form action="<c:url value='/projects/${selectedProject.id}/edit' />" method="post">
+                <div class="dialog-heading">
+                    <div>
+                        <span class="eyebrow">EDIT PROJECT</span>
+                        <h2>프로젝트 수정</h2>
+                    </div>
+                    <button type="button" class="dialog-close"
+                            onclick="document.getElementById('editProjectDialog').close()" aria-label="닫기">×</button>
+                </div>
+                <label class="field-label" for="editProjectName">프로젝트명</label>
+                <input id="editProjectName" class="text-input" type="text" name="name"
+                       value="${fn:escapeXml(selectedProject.name)}" maxlength="200" required autocomplete="off">
+                <div class="dialog-actions">
+                    <button type="button" class="action-button"
+                            onclick="document.getElementById('editProjectDialog').close()">취소</button>
+                    <button type="submit" class="action-button action-button-primary">저장</button>
+                </div>
+            </form>
+        </dialog>
+    </c:if>
 </body>
 </html>
