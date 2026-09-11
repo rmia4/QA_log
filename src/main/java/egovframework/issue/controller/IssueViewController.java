@@ -68,31 +68,42 @@ public class IssueViewController {
 
     @RequestMapping(value = "/assignee", method = RequestMethod.POST)
     public String changeAssignee(@PathVariable Long id, @RequestParam(required = false) String assigneeId,
-            @RequestParam LocalDateTime expectedUpdatedAt, HttpSession session) {
+            @RequestParam String expectedUpdatedAt, HttpSession session) {
         // "미지정" 옵션은 빈 문자열로 전송된다 - Long으로 직접 바인딩하면 스프링이 "" -> Long 변환에서
         // 400을 낼 수 있어 String으로 받아 직접 파싱한다.
         Long parsedAssigneeId = (assigneeId == null || assigneeId.isEmpty()) ? null : Long.valueOf(assigneeId);
         return withConflictHandling(id, () ->
-                issueService.changeAssignee(id, parsedAssigneeId, expectedUpdatedAt, currentUserId(session)));
+                issueService.changeAssignee(id, parsedAssigneeId, parseUpdatedAt(expectedUpdatedAt), currentUserId(session)));
     }
 
     @RequestMapping(value = "/status", method = RequestMethod.POST)
     public String changeStatus(@PathVariable Long id, @RequestParam String status,
-            @RequestParam LocalDateTime expectedUpdatedAt, HttpSession session) {
+            @RequestParam String expectedUpdatedAt, HttpSession session) {
         return withConflictHandling(id, () ->
-                issueService.changeStatus(id, status, expectedUpdatedAt, currentUserId(session)));
+                issueService.changeStatus(id, status, parseUpdatedAt(expectedUpdatedAt), currentUserId(session)));
     }
 
     @RequestMapping(value = "/close", method = RequestMethod.POST)
-    public String close(@PathVariable Long id, @RequestParam LocalDateTime expectedUpdatedAt, HttpSession session) {
+    public String close(@PathVariable Long id, @RequestParam String expectedUpdatedAt, HttpSession session) {
         return withConflictHandling(id, () ->
-                issueService.closeIssue(id, expectedUpdatedAt, currentUserId(session)));
+                issueService.closeIssue(id, parseUpdatedAt(expectedUpdatedAt), currentUserId(session)));
     }
 
     @RequestMapping(value = "/reopen", method = RequestMethod.POST)
-    public String reopen(@PathVariable Long id, @RequestParam LocalDateTime expectedUpdatedAt, HttpSession session) {
+    public String reopen(@PathVariable Long id, @RequestParam String expectedUpdatedAt, HttpSession session) {
         return withConflictHandling(id, () ->
-                issueService.reopenIssue(id, expectedUpdatedAt, currentUserId(session)));
+                issueService.reopenIssue(id, parseUpdatedAt(expectedUpdatedAt), currentUserId(session)));
+    }
+
+    /**
+     * Postgres TIMESTAMP는 마이크로초(소수점 최대 6자리)까지 저장하는데, LocalDateTime.toString()이
+     * 뒤쪽 0을 잘라내서 소수점 자릿수가 값마다 들쭉날쭉하다(예: ".566049" vs ".19228"). Spring MVC의
+     * 기본 LocalDateTime 컨버터는 이 가변 자릿수를 못 받아들여 400을 낸다(mvn tomcat7:run 중 실제
+     * 담당자 변경을 해보다가 재현) - @RequestParam LocalDateTime 자동 바인딩 대신 String으로 받아
+     * LocalDateTime.parse()(ISO_LOCAL_DATE_TIME, 0~9자리 가변 지원)로 직접 파싱한다.
+     */
+    private LocalDateTime parseUpdatedAt(String value) {
+        return LocalDateTime.parse(value);
     }
 
     /** 첨부 썸네일/다운로드 - 실제 파일은 웹앱 바깥(attachment.storage.path)에 있어 정적 리소스 매핑으로는 못 준다. */
