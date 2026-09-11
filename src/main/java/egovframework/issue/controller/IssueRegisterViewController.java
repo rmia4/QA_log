@@ -40,8 +40,13 @@ public class IssueRegisterViewController {
     private UserMapper userMapper;
 
     @RequestMapping(value = "/new", method = RequestMethod.GET)
-    public String form(@PathVariable Long projectId, Model model) {
+    public String form(@PathVariable Long projectId, Model model, HttpSession session) {
+        if (session.getAttribute(SessionKeys.LOGIN_USER_ID) == null) {
+            return "redirect:/login";
+        }
+        model.addAttribute("projects", projectService.getProjectList());
         model.addAttribute("project", projectService.getProject(projectId));
+        model.addAttribute("selectedProjectId", projectId);
         model.addAttribute("users", userMapper.selectAllForOptions());
         model.addAttribute("severityOptions", Arrays.asList(IssueSeverity.values()));
         model.addAttribute("priorityOptions", Arrays.asList(IssuePriority.values()));
