@@ -25,4 +25,10 @@
         ORDER BY created_at ASC, id ASC
     </select>
 
+    <select id="selectAttachmentById" parameterType="long" resultMap="issueAttachmentResultMap">
+        SELECT id, issue_id, original_name, storage_key, mime_type, size_bytes, uploaded_by, created_at
+        FROM issue_attachments
+        WHERE id = #{id}
+    </select>
+
 </mapper>

@@ -87,5 +87,10 @@ public class LoginControllerTest {
         public String selectDisplayName(Long id) {
             return user.getId().equals(id) ? user.getDisplayName() : null;
         }
+
+        @Override
+        public java.util.List<UserVO> selectAllForOptions() {
+            return java.util.Collections.singletonList(user);
+        }
     }
 }

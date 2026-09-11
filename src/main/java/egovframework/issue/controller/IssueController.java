@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,10 +24,12 @@ import egovframework.issue.dto.request.IssueStatusChangeRequestDTO;
 import egovframework.issue.service.IssueService;
 
 /**
- * 오류상세_기능명세서.md §3 API 표 그대로 구현한다. 화면(JSP)은 아직 없고, 상세/등록 화면이
- * 완성되면 이 JSON API를 그대로 AJAX로 호출하거나, 필요 시 화면 렌더링용 GET을 별도로 추가한다.
+ * 오류상세_기능명세서.md §3 API 표 그대로 구현한다(JSON). /api 접두사를 붙여 화면 렌더링용
+ * IssueViewController(같은 /issues/{id} 경로, JSP 반환)와 경로가 겹치지 않게 한다 -
+ * ProjectController가 이미 쓰던 /api/projects 관례와 동일하게 맞춤.
  */
 @RestController
+@RequestMapping("/api")
 public class IssueController {
 
     @Autowired
