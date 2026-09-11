@@ -3,6 +3,7 @@ package egovframework.issue.controller;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import javax.servlet.http.HttpSession;
 
@@ -40,8 +41,16 @@ public class IssueRegisterViewController {
     private UserMapper userMapper;
 
     @RequestMapping(value = "/new", method = RequestMethod.GET)
-    public String form(@PathVariable Long projectId, Model model) {
+    public String form(@PathVariable Long projectId, Model model, HttpSession session) {
+        if (session.getAttribute(SessionKeys.LOGIN_USER_ID) == null) {
+            return "redirect:/login";
+        }
+        model.addAttribute("projects", projectService.getProjectList());
         model.addAttribute("project", projectService.getProject(projectId));
+        model.addAttribute("selectedProjectId", projectId);
+        String registrationToken = UUID.randomUUID().toString();
+        session.setAttribute(SessionKeys.ISSUE_CREATE_TOKEN, registrationToken);
+        model.addAttribute("registrationToken", registrationToken);
         model.addAttribute("users", userMapper.selectAllForOptions());
         model.addAttribute("severityOptions", Arrays.asList(IssueSeverity.values()));
         model.addAttribute("priorityOptions", Arrays.asList(IssuePriority.values()));
@@ -51,10 +60,43 @@ public class IssueRegisterViewController {
     @RequestMapping(method = RequestMethod.POST)
     public String create(@PathVariable Long projectId,
             IssueSaveRequestDTO request,
+            @RequestParam(value = "registrationToken", required = false) String registrationToken,
             @RequestParam(value = "files", required = false) List<MultipartFile> files,
             HttpSession session) throws IOException {
         Long actorId = (Long) session.getAttribute(SessionKeys.LOGIN_USER_ID);
-        Long issueId = issueService.createIssue(projectId, request, files, actorId);
-        return "redirect:/issues/" + issueId;
+        if (actorId == null) {
+            return "redirect:/login";
+        }
+        if (!consumeRegistrationToken(session, registrationToken)) {
+            return "redirect:/?projectId=" + projectId + "&issueCreateError=duplicate";
+        }
+
+        boolean created = false;
+        try {
+            Long issueId = issueService.createIssue(projectId, request, files, actorId);
+            created = true;
+            return "redirect:/issues/" + issueId;
+        } finally {
+            if (!created) {
+                restoreRegistrationToken(session, registrationToken);
+            }
+        }
+    }
+
+    private boolean consumeRegistrationToken(HttpSession session, String registrationToken) {
+        synchronized (session) {
+            Object savedToken = session.getAttribute(SessionKeys.ISSUE_CREATE_TOKEN);
+            if (registrationToken == null || !registrationToken.equals(savedToken)) {
+                return false;
+            }
+            session.removeAttribute(SessionKeys.ISSUE_CREATE_TOKEN);
+            return true;
+        }
+    }
+
+    private void restoreRegistrationToken(HttpSession session, String registrationToken) {
+        synchronized (session) {
+            session.setAttribute(SessionKeys.ISSUE_CREATE_TOKEN, registrationToken);
+        }
     }
 }

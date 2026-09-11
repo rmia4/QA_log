@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <!DOCTYPE html>
 <html lang="ko">
@@ -7,6 +8,7 @@
 <meta charset="UTF-8">
 <title>오류 등록 · ${project.name} · QA로그</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="<c:url value='/resources/css/main.css' />">
 <style>
   :root {
     --bg:#F7F8FA; --surface:#FFFFFF; --surface-2:#F4F5F7;
@@ -23,7 +25,7 @@
   .brand { font-weight:700; }
   .back-link { font-size:13px; color:var(--ink-muted); text-decoration:none; }
 
-  .page { max-width:760px; margin:0 auto; padding:28px 24px 80px; }
+  .register-page { max-width:860px; margin:0 auto; padding:0 0 80px; }
   .crumb { font-size:12.5px; color:var(--ink-faint); margin-bottom:6px; }
   h1.title { font-size:22px; font-weight:700; margin:0 0 20px; }
 
@@ -66,16 +68,50 @@
 </style>
 </head>
 <body>
-  <header class="topbar">
-    <span class="brand">QA로그</span>
-    <a class="back-link" href="${ctx}/">← 목록으로</a>
+  <header class="app-header">
+    <a class="brand" href="${ctx}/">
+      <span class="brand-mark" aria-hidden="true">Q</span>
+      <span>QA로그</span>
+    </a>
+    <div class="header-user">
+      <span class="user-avatar" aria-hidden="true"><c:out value="${empty sessionScope.loginDisplayName ? 'U' : fn:substring(sessionScope.loginDisplayName, 0, 1)}" /></span>
+      <span class="user-name"><c:out value="${empty sessionScope.loginDisplayName ? '사용자' : sessionScope.loginDisplayName}" /></span>
+    </div>
   </header>
 
-  <main class="page">
-    <div class="crumb">${project.name}</div>
-    <h1 class="title">오류 등록</h1>
+  <main class="workspace">
+    <aside class="project-panel" aria-label="프로젝트 목록">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">WORKSPACE</span>
+          <h1>프로젝트</h1>
+        </div>
+        <span class="project-total">${fn:length(projects)}</span>
+      </div>
+      <nav class="project-list">
+        <c:forEach var="projectItem" items="${projects}">
+          <c:url var="projectUrl" value="/">
+            <c:param name="projectId" value="${projectItem.id}" />
+          </c:url>
+          <a class="project-item ${projectItem.id == selectedProjectId ? 'is-selected' : ''}" href="${projectUrl}">
+            <span class="project-icon" aria-hidden="true"><c:out value="${fn:substring(projectItem.name, 0, 1)}" /></span>
+            <span class="project-copy">
+              <strong><c:out value="${projectItem.name}" /></strong>
+              <small>미종료 오류 ${projectItem.openIssueCount}건</small>
+            </span>
+            <span class="project-count">${projectItem.openIssueCount}</span>
+          </a>
+        </c:forEach>
+      </nav>
+    </aside>
 
-    <form class="panel" action="${ctx}/projects/${project.id}/issues" method="post" enctype="multipart/form-data" id="registerForm">
+    <section class="issue-panel" aria-label="새 오류 등록">
+      <div class="register-page">
+        <div class="crumb"><c:out value="${project.name}" /> / 오류 관리</div>
+        <h1 class="title">새 오류 추가</h1>
+
+        <form class="panel" action="${ctx}/projects/${project.id}/issues" method="post" enctype="multipart/form-data" id="registerForm">
+      <input type="hidden" name="registrationToken" value="${registrationToken}">
 
       <div class="field">
         <label>제목</label>
@@ -164,10 +200,12 @@
       </div>
 
       <div class="actions">
-        <a class="btn" href="${ctx}/">취소</a>
-        <button type="submit" class="btn btn-primary">등록</button>
+        <a class="btn" href="${ctx}/?projectId=${project.id}">취소</a>
+        <button type="submit" class="btn btn-primary" id="submitButton">등록</button>
       </div>
-    </form>
+        </form>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -175,8 +213,27 @@
     var fileInput = document.getElementById('fileInput');
     var fileList = document.getElementById('fileList');
     var fileReject = document.getElementById('fileReject');
+    var registerForm = document.getElementById('registerForm');
+    var submitButton = document.getElementById('submitButton');
     var allowed = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
     var selectedFiles = [];
+    var submitting = false;
+
+    registerForm.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+      }
+    });
+
+    registerForm.addEventListener('submit', function (e) {
+      if (submitting) {
+        e.preventDefault();
+        return;
+      }
+      submitting = true;
+      submitButton.disabled = true;
+      submitButton.textContent = '등록 중...';
+    });
 
     dropzone.addEventListener('click', function () { fileInput.click(); });
     dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.classList.add('dragover'); });
