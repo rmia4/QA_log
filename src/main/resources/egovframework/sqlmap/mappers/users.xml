@@ -1,7 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="egovframework.user.mapper.UserMapper">
-    <!-- TODO: 가입/로그인 구현 시 selectByLoginId, insertUser 등 쿼리 추가 -->
+    <resultMap id="userResultMap" type="egovframework.user.vo.UserVO">
+        <id property="id" column="id" />
+        <result property="loginId" column="login_id" />
+        <result property="passwordHash" column="password_hash" />
+        <result property="displayName" column="display_name" />
+        <result property="createdAt" column="created_at" />
+        <result property="updatedAt" column="updated_at" />
+    </resultMap>
+
+    <select id="selectByLoginId" resultMap="userResultMap">
+        SELECT id, login_id, password_hash, display_name, created_at, updated_at
+        FROM users
+        WHERE login_id = #{loginId}
+    </select>
+
+    <insert id="insertUser" parameterType="egovframework.user.vo.UserVO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (login_id, password_hash, display_name)
+        VALUES (#{loginId}, #{passwordHash}, #{displayName})
+    </insert>
 
     <select id="selectDisplayName" parameterType="long" resultType="string">
         SELECT display_name FROM users WHERE id = #{id}

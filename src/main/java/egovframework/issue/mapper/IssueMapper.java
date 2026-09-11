@@ -1,13 +1,17 @@
 package egovframework.issue.mapper;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
 import egovframework.issue.dto.IssueDetailResponseDTO;
+import egovframework.issue.dto.IssueListItemDTO;
 import egovframework.issue.vo.IssueVO;
 
 public interface IssueMapper {
+
+    List<IssueListItemDTO> selectIssueList(@Param("projectId") Long projectId, @Param("closed") boolean closed);
 
     /** 담당자명·등록자명·프로젝트명까지 조인해서 화면 하나 그리는 데 필요한 전부를 반환. 첨부목록은 별도 쿼리(IssueAttachmentMapper). */
     IssueDetailResponseDTO selectIssueDetail(Long id);

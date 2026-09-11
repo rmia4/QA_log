@@ -9,6 +9,14 @@
 
     <display-name>QA로그</display-name>
 
+    <session-config>
+        <session-timeout>43200</session-timeout>
+        <cookie-config>
+            <http-only>true</http-only>
+            <max-age>2592000</max-age>
+        </cookie-config>
+    </session-config>
+
     <context-param>
         <param-name>contextConfigLocation</param-name>
         <param-value>/WEB-INF/spring/root-context.xml</param-value>
