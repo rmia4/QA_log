@@ -111,6 +111,7 @@
         <h1 class="title">새 오류 추가</h1>
 
         <form class="panel" action="${ctx}/projects/${project.id}/issues" method="post" enctype="multipart/form-data" id="registerForm">
+      <input type="hidden" name="registrationToken" value="${registrationToken}">
 
       <div class="field">
         <label>제목</label>
@@ -200,7 +201,7 @@
 
       <div class="actions">
         <a class="btn" href="${ctx}/?projectId=${project.id}">취소</a>
-        <button type="submit" class="btn btn-primary">등록</button>
+        <button type="submit" class="btn btn-primary" id="submitButton">등록</button>
       </div>
         </form>
       </div>
@@ -212,8 +213,27 @@
     var fileInput = document.getElementById('fileInput');
     var fileList = document.getElementById('fileList');
     var fileReject = document.getElementById('fileReject');
+    var registerForm = document.getElementById('registerForm');
+    var submitButton = document.getElementById('submitButton');
     var allowed = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
     var selectedFiles = [];
+    var submitting = false;
+
+    registerForm.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+      }
+    });
+
+    registerForm.addEventListener('submit', function (e) {
+      if (submitting) {
+        e.preventDefault();
+        return;
+      }
+      submitting = true;
+      submitButton.disabled = true;
+      submitButton.textContent = '등록 중...';
+    });
 
     dropzone.addEventListener('click', function () { fileInput.click(); });
     dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.classList.add('dragover'); });

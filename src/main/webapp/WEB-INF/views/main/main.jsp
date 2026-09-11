@@ -69,6 +69,11 @@
                     등록된 오류가 있는 프로젝트는 삭제할 수 없습니다.
                 </div>
             </c:if>
+            <c:if test="${param.issueCreateError == 'duplicate'}">
+                <div class="page-alert page-alert-info" role="status">
+                    이미 처리된 등록 요청입니다. 오류가 중복으로 등록되지 않았습니다.
+                </div>
+            </c:if>
 
             <c:choose>
                 <c:when test="${not empty selectedProject}">

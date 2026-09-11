@@ -121,6 +121,7 @@ a { color: inherit; text-decoration: none; }
     font-size: 13px;
     font-weight: 650;
 }
+.page-alert-info { color: var(--blue-700); background: var(--blue-50); border-color: #cbdcff; }
 .issue-heading { display: flex; align-items: flex-end; justify-content: space-between; }
 .issue-actions { display: grid; justify-items: stretch; gap: 8px; min-width: 142px; }
 .issue-actions .action-button { display: inline-flex; align-items: center; justify-content: center; }

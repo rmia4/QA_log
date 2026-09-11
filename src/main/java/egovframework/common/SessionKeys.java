@@ -4,6 +4,7 @@ package egovframework.common;
 public final class SessionKeys {
 
     public static final String LOGIN_USER_ID = "LOGIN_USER_ID";
+    public static final String ISSUE_CREATE_TOKEN = "ISSUE_CREATE_TOKEN";
     public static final int LOGIN_SESSION_SECONDS = 30 * 24 * 60 * 60;
 
     private SessionKeys() {
