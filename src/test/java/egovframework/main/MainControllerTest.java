@@ -114,6 +114,11 @@ public class MainControllerTest {
         }
 
         @Override
+        public ProjectVO getProject(Long id) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public ProjectVO createProject(String name, Long createdBy) {
             throw new UnsupportedOperationException();
         }

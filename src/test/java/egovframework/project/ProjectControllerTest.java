@@ -104,6 +104,11 @@ public class ProjectControllerTest {
         }
 
         @Override
+        public ProjectVO getProject(Long id) {
+            return null;
+        }
+
+        @Override
         public ProjectVO createProject(String name, Long createdBy) {
             this.createdName = name;
             this.createdBy = createdBy;
