@@ -103,6 +103,21 @@ CREATE TABLE issue_histories (
 
 CREATE INDEX idx_issue_histories_issue_created ON issue_histories (issue_id, created_at);
 
+-- issue_number는 NOT NULL인데 id(GENERATED ALWAYS AS IDENTITY)와 같은 값을 쓰기로 했다(오류등록_기능명세서.md
+-- 2.2). "INSERT 후 별도 UPDATE로 채운다"는 애플리케이션 레벨 2단계 방식은 NOT NULL 제약이 트랜잭션 커밋까지
+-- 유예되지 않아 INSERT 시점에 즉시 위반되므로 실제로는 동작하지 않는다(Supabase 연결 테스트 중 실제로
+-- 이 오류를 재현해서 발견함) - DB가 INSERT 시점에 트리거로 직접 채우도록 수정한다. Postgres는 BEFORE ROW
+-- 트리거가 실행되기 전에 identity 컬럼 기본값을 이미 채워두므로 트리거 안에서 NEW.id를 바로 쓸 수 있다.
+CREATE OR REPLACE FUNCTION set_issue_number()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.issue_number = NEW.id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_issues_set_issue_number BEFORE INSERT ON issues FOR EACH ROW EXECUTE FUNCTION set_issue_number();
+
 -- MySQL의 "ON UPDATE CURRENT_TIMESTAMP" 대체 - updated_at 있는 테이블마다 UPDATE 시 자동 갱신
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
