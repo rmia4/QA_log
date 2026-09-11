@@ -75,8 +75,8 @@ public class IssueServiceImpl implements IssueService {
         issue.setCreatedBy(actorId);
         issue.setUpdatedBy(actorId);
 
+        // issue_number는 DB 트리거(trg_issues_set_issue_number)가 id와 동일하게 채운다.
         issueMapper.insertIssue(issue);
-        issueMapper.syncIssueNumber(issue.getId());
 
         String changeGroupId = UUID.randomUUID().toString();
         recordEvent(issue.getId(), changeGroupId, IssueEventType.CREATED.getCode(), null, actorId);
