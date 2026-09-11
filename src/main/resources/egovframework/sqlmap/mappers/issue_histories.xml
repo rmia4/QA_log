@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.issue.mapper.IssueHistoryMapper">
+
+    <insert id="insertHistory" parameterType="egovframework.issue.vo.IssueHistoryVO">
+        INSERT INTO issue_histories (
+            issue_id, change_group_id, event_type, field_name, old_value, new_value, related_record_id, actor_id
+        ) VALUES (
+            #{issueId}, #{changeGroupId}, #{eventType}, #{fieldName}, #{oldValue}, #{newValue}, #{relatedRecordId}, #{actorId}
+        )
+    </insert>
+
+    <resultMap id="issueHistoryResultMap" type="egovframework.issue.dto.IssueHistoryResponseDTO">
+        <id     column="id"                property="id" />
+        <result column="change_group_id"   property="changeGroupId" />
+        <result column="event_type"        property="eventType" />
+        <result column="field_name"        property="fieldName" />
+        <result column="old_value"         property="oldValue" />
+        <result column="new_value"         property="newValue" />
+        <result column="related_record_id" property="relatedRecordId" />
+        <result column="actor_id"          property="actorId" />
+        <result column="actor_name"        property="actorName" />
+        <result column="created_at"        property="createdAt" />
+    </resultMap>
+
+    <!-- comment_added는 댓글 탭에서 이미 보여주므로 이력 탭 목록에서는 제외한다(오류상세_기능명세서.md 4.4) -->
+    <select id="selectHistories" parameterType="long" resultMap="issueHistoryResultMap">
+        SELECT h.id, h.change_group_id, h.event_type, h.field_name, h.old_value, h.new_value,
+               h.related_record_id, h.actor_id, u.display_name AS actor_name, h.created_at
+        FROM issue_histories h
+        JOIN users u ON u.id = h.actor_id
+        WHERE h.issue_id = #{issueId}
+          AND h.event_type != 'comment_added'
+        ORDER BY h.created_at ASC, h.id ASC
+    </select>
+
+</mapper>

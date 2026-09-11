@@ -15,4 +15,8 @@
         FROM users
         WHERE login_id = #{loginId}
     </select>
+
+    <select id="selectDisplayName" parameterType="long" resultType="string">
+        SELECT display_name FROM users WHERE id = #{id}
+    </select>
 </mapper>

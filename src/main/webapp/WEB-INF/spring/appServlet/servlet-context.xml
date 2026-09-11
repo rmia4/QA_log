@@ -11,6 +11,9 @@
     <mvc:annotation-driven />
     <mvc:resources mapping="/resources/**" location="/resources/" />
 
+    <!-- web.xml의 <multipart-config>(Servlet 3.1 표준)를 그대로 사용 - 별도 라이브러리 불필요 -->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
+
     <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <property name="prefix" value="/WEB-INF/views/" />
         <property name="suffix" value=".jsp" />

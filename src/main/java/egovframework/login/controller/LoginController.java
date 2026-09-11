@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import egovframework.common.SessionKeys;
 import egovframework.login.service.LoginService;
 import egovframework.user.vo.UserVO;
 
@@ -45,7 +46,7 @@ public class LoginController {
             oldSession.invalidate();
         }
         HttpSession session = request.getSession(true);
-        session.setAttribute("loginUserId", user.getId());
+        session.setAttribute(SessionKeys.LOGIN_USER_ID, user.getId());
         session.setAttribute("loginDisplayName", user.getDisplayName());
         return "redirect:/";
     }

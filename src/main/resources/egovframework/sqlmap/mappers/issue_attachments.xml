@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.issue.mapper.IssueAttachmentMapper">
+
+    <insert id="insertAttachment" parameterType="egovframework.issue.vo.IssueAttachmentVO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO issue_attachments (issue_id, original_name, storage_key, mime_type, size_bytes, uploaded_by)
+        VALUES (#{issueId}, #{originalName}, #{storageKey}, #{mimeType}, #{sizeBytes}, #{uploadedBy})
+    </insert>
+
+    <resultMap id="issueAttachmentResultMap" type="egovframework.issue.vo.IssueAttachmentVO">
+        <id     column="id"            property="id" />
+        <result column="issue_id"      property="issueId" />
+        <result column="original_name" property="originalName" />
+        <result column="storage_key"   property="storageKey" />
+        <result column="mime_type"     property="mimeType" />
+        <result column="size_bytes"    property="sizeBytes" />
+        <result column="uploaded_by"   property="uploadedBy" />
+        <result column="created_at"    property="createdAt" />
+    </resultMap>
+
+    <select id="selectAttachments" parameterType="long" resultMap="issueAttachmentResultMap">
+        SELECT id, issue_id, original_name, storage_key, mime_type, size_bytes, uploaded_by, created_at
+        FROM issue_attachments
+        WHERE issue_id = #{issueId}
+        ORDER BY created_at ASC, id ASC
+    </select>
+
+</mapper>
