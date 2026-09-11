@@ -92,6 +92,26 @@ public class MainControllerTest {
                 .andExpect(model().attribute("issues", closedIssues));
     }
 
+    @Test
+    public void issueListDefaultsToHighestSeverityFirst() throws Exception {
+        mockMvc.perform(get("/").param("projectId", "22").session(loggedInSession()))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("sort", "severity"))
+                .andExpect(model().attribute("direction", "desc"));
+    }
+
+    @Test
+    public void requestedCreatedDateAscendingSortIsKeptInModel() throws Exception {
+        mockMvc.perform(get("/")
+                .param("projectId", "22")
+                .param("sort", "createdAt")
+                .param("direction", "asc")
+                .session(loggedInSession()))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("sort", "createdAt"))
+                .andExpect(model().attribute("direction", "asc"));
+    }
+
     private MockHttpSession loggedInSession() {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute(SessionKeys.LOGIN_USER_ID, 7L);
@@ -136,7 +156,7 @@ public class MainControllerTest {
 
     private final class IssueListFixturesService implements IssueListService {
         @Override
-        public List<IssueListItemDTO> getIssueList(Long projectId, boolean closed) {
+        public List<IssueListItemDTO> getIssueList(Long projectId, boolean closed, String sort, String direction) {
             if (!Long.valueOf(22L).equals(projectId)) {
                 return java.util.Collections.emptyList();
             }

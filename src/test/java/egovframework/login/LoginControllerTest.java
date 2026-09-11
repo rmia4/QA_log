@@ -1,6 +1,7 @@
 package egovframework.login;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
@@ -11,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -74,6 +76,19 @@ public class LoginControllerTest {
                 .andExpect(view().name("login/login"))
                 .andExpect(model().attribute("loginId", "tester"))
                 .andExpect(model().attribute("loginError", "아이디 또는 비밀번호가 올바르지 않습니다."));
+    }
+
+    @Test
+    public void logoutInvalidatesSessionAndReturnsToLogin() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(SessionKeys.LOGIN_USER_ID, 7L);
+        session.setAttribute("loginDisplayName", "테스터");
+
+        mockMvc.perform(post("/logout").session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+
+        assertTrue(session.isInvalid());
     }
 
     private static final class StubUserMapper implements UserMapper {
