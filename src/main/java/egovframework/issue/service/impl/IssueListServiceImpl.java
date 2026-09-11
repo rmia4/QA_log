@@ -16,7 +16,7 @@ public class IssueListServiceImpl implements IssueListService {
     private IssueMapper issueMapper;
 
     @Override
-    public List<IssueListItemDTO> getIssueList(Long projectId, boolean closed) {
-        return issueMapper.selectIssueList(projectId, closed);
+    public List<IssueListItemDTO> getIssueList(Long projectId, boolean closed, String sort, String direction) {
+        return issueMapper.selectIssueList(projectId, closed, sort, direction);
     }
 }

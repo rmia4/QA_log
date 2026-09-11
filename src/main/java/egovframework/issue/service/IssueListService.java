@@ -6,5 +6,5 @@ import egovframework.issue.dto.IssueListItemDTO;
 
 public interface IssueListService {
 
-    List<IssueListItemDTO> getIssueList(Long projectId, boolean closed);
+    List<IssueListItemDTO> getIssueList(Long projectId, boolean closed, String sort, String direction);
 }
