@@ -26,7 +26,7 @@ public class LoginController {
 
     @GetMapping("/login")
     public String loginPage() {
-        return "login";
+        return "login/login";
     }
 
     @PostMapping("/login")
@@ -38,7 +38,7 @@ public class LoginController {
         if (user == null) {
             model.addAttribute("loginId", loginId == null ? "" : loginId.trim());
             model.addAttribute("loginError", LOGIN_ERROR);
-            return "login";
+            return "login/login";
         }
 
         HttpSession oldSession = request.getSession(false);

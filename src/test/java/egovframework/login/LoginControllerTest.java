@@ -46,7 +46,7 @@ public class LoginControllerTest {
     public void loginPageIsAvailable() throws Exception {
         mockMvc.perform(get("/login"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("login"));
+                .andExpect(view().name("login/login"));
     }
 
     @Test
@@ -66,7 +66,7 @@ public class LoginControllerTest {
                 .param("login_id", "tester")
                 .param("password", "wrong-password"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("login"))
+                .andExpect(view().name("login/login"))
                 .andExpect(model().attribute("loginId", "tester"))
                 .andExpect(model().attribute("loginError", "아이디 또는 비밀번호가 올바르지 않습니다."));
     }

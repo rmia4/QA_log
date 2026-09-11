@@ -2,6 +2,35 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="egovframework.issue.mapper.IssueMapper">
 
+    <resultMap id="issueListResultMap" type="egovframework.issue.dto.IssueListItemDTO">
+        <id     column="id"            property="id" />
+        <result column="issue_number"  property="issueNumber" />
+        <result column="project_id"    property="projectId" />
+        <result column="title"         property="title" />
+        <result column="status"        property="status" />
+        <result column="severity"      property="severity" />
+        <result column="priority"      property="priority" />
+        <result column="assignee_name" property="assigneeName" />
+        <result column="updated_at"    property="updatedAt" />
+    </resultMap>
+
+    <select id="selectIssueList" resultMap="issueListResultMap">
+        SELECT i.id, i.issue_number, i.project_id, i.title, i.status, i.severity, i.priority,
+               u.display_name AS assignee_name, i.updated_at
+        FROM issues i
+        LEFT JOIN users u ON u.id = i.assignee_id
+        WHERE i.project_id = #{projectId}
+        <choose>
+            <when test="closed">
+                AND i.status = 'closed'
+            </when>
+            <otherwise>
+                AND i.status != 'closed'
+            </otherwise>
+        </choose>
+        ORDER BY i.updated_at DESC, i.id DESC
+    </select>
+
     <resultMap id="issueDetailResultMap" type="egovframework.issue.dto.IssueDetailResponseDTO">
         <id     column="id"                property="id" />
         <result column="issue_number"      property="issueNumber" />
