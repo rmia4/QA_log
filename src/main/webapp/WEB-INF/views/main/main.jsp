@@ -18,6 +18,9 @@
         <div class="header-user">
             <span class="user-avatar" aria-hidden="true"><c:out value="${empty sessionScope.loginDisplayName ? 'U' : fn:substring(sessionScope.loginDisplayName, 0, 1)}" /></span>
             <span class="user-name"><c:out value="${empty sessionScope.loginDisplayName ? '사용자' : sessionScope.loginDisplayName}" /></span>
+            <form class="logout-form" action="<c:url value='/logout' />" method="post">
+                <button type="submit" class="logout-button">로그아웃</button>
+            </form>
         </div>
     </header>
 

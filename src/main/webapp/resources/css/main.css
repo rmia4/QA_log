@@ -52,6 +52,20 @@ a { color: inherit; text-decoration: none; }
 
 .header-user { gap: 9px; color: var(--ink-700); font-size: 14px; font-weight: 650; }
 .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--blue-100); color: var(--blue-700); }
+.logout-form { margin: 0 0 0 5px; }
+.logout-button {
+    height: 32px;
+    padding: 0 11px;
+    color: var(--ink-500);
+    background: #fff;
+    border: 1px solid #d7ddea;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.logout-button:hover { color: var(--blue-700); background: var(--blue-50); border-color: #cbdcff; }
 
 .workspace {
     min-height: calc(100vh - 68px);
