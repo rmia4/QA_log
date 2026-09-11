@@ -1,5 +1,113 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="egovframework.issue.mapper.IssueMapper">
-    <!-- TODO: 오류 등록/상세/목록 구현 시 쿼리 추가 -->
+
+    <resultMap id="issueDetailResultMap" type="egovframework.issue.dto.IssueDetailResponseDTO">
+        <id     column="id"                property="id" />
+        <result column="issue_number"      property="issueNumber" />
+        <result column="project_id"        property="projectId" />
+        <result column="project_name"      property="projectName" />
+        <result column="title"             property="title" />
+        <result column="location"          property="location" />
+        <result column="location_url"      property="locationUrl" />
+        <result column="description"       property="description" />
+        <result column="steps_to_reproduce" property="stepsToReproduce" />
+        <result column="expected_result"   property="expectedResult" />
+        <result column="actual_result"     property="actualResult" />
+        <result column="test_version"      property="testVersion" />
+        <result column="test_environment"  property="testEnvironment" />
+        <result column="suggested_fix"     property="suggestedFix" />
+        <result column="status"            property="status" />
+        <result column="severity"          property="severity" />
+        <result column="priority"          property="priority" />
+        <result column="assignee_id"       property="assigneeId" />
+        <result column="assignee_name"     property="assigneeName" />
+        <result column="created_by"        property="createdBy" />
+        <result column="created_by_name"   property="createdByName" />
+        <result column="updated_by"        property="updatedBy" />
+        <result column="updated_by_name"   property="updatedByName" />
+        <result column="closed_by"         property="closedBy" />
+        <result column="closed_by_name"    property="closedByName" />
+        <result column="closed_at"         property="closedAt" />
+        <result column="created_at"        property="createdAt" />
+        <result column="updated_at"        property="updatedAt" />
+    </resultMap>
+
+    <select id="selectIssueDetail" parameterType="long" resultMap="issueDetailResultMap">
+        SELECT
+            i.id, i.issue_number, i.project_id, p.name AS project_name,
+            i.title, i.location, i.location_url, i.description, i.steps_to_reproduce,
+            i.expected_result, i.actual_result, i.test_version, i.test_environment, i.suggested_fix,
+            i.status, i.severity, i.priority,
+            i.assignee_id, ua.display_name AS assignee_name,
+            i.created_by, uc.display_name AS created_by_name,
+            i.updated_by, uu.display_name AS updated_by_name,
+            i.closed_by, ucl.display_name AS closed_by_name,
+            i.closed_at, i.created_at, i.updated_at
+        FROM issues i
+        JOIN projects p ON p.id = i.project_id
+        LEFT JOIN users ua ON ua.id = i.assignee_id
+        JOIN users uc ON uc.id = i.created_by
+        JOIN users uu ON uu.id = i.updated_by
+        LEFT JOIN users ucl ON ucl.id = i.closed_by
+        WHERE i.id = #{id}
+    </select>
+
+    <insert id="insertIssue" parameterType="egovframework.issue.vo.IssueVO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO issues (
+            project_id, title, location, location_url, description, steps_to_reproduce,
+            expected_result, actual_result, test_version, test_environment, suggested_fix,
+            status, severity, priority, assignee_id, created_by, updated_by
+        ) VALUES (
+            #{projectId}, #{title}, #{location}, #{locationUrl}, #{description}, #{stepsToReproduce},
+            #{expectedResult}, #{actualResult}, #{testVersion}, #{testEnvironment}, #{suggestedFix},
+            #{status}, #{severity}, #{priority}, #{assigneeId}, #{createdBy}, #{updatedBy}
+        )
+    </insert>
+
+    <update id="syncIssueNumber" parameterType="long">
+        UPDATE issues SET issue_number = id WHERE id = #{id}
+    </update>
+
+    <update id="updateIssueFields">
+        UPDATE issues SET
+            title = #{issue.title},
+            location = #{issue.location},
+            location_url = #{issue.locationUrl},
+            description = #{issue.description},
+            steps_to_reproduce = #{issue.stepsToReproduce},
+            expected_result = #{issue.expectedResult},
+            actual_result = #{issue.actualResult},
+            test_version = #{issue.testVersion},
+            test_environment = #{issue.testEnvironment},
+            suggested_fix = #{issue.suggestedFix},
+            severity = #{issue.severity},
+            priority = #{issue.priority},
+            updated_by = #{issue.updatedBy},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{issue.id} AND updated_at = #{expectedUpdatedAt}
+    </update>
+
+    <update id="updateAssignee">
+        UPDATE issues SET assignee_id = #{assigneeId}, updated_by = #{updatedBy}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND updated_at = #{expectedUpdatedAt}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE issues SET status = #{status}, updated_by = #{updatedBy}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND updated_at = #{expectedUpdatedAt}
+    </update>
+
+    <update id="closeIssue">
+        UPDATE issues SET status = 'closed', closed_by = #{closedBy}, closed_at = CURRENT_TIMESTAMP,
+            updated_by = #{closedBy}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND updated_at = #{expectedUpdatedAt}
+    </update>
+
+    <update id="reopenIssue">
+        UPDATE issues SET status = 'new', closed_by = NULL, closed_at = NULL,
+            updated_by = #{updatedBy}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND updated_at = #{expectedUpdatedAt}
+    </update>
+
 </mapper>

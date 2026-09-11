@@ -8,8 +8,9 @@
            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
            http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
 
-    <!-- db.properties는 .gitignore 대상 - db.properties.example을 복사해 각자 로컬에 만든다 -->
-    <context:property-placeholder location="classpath:db.properties" />
+    <!-- db.properties는 .gitignore 대상 - db.properties.example을 복사해 각자 로컬에 만든다.
+         app.properties는 민감하지 않은 설정이라 git에 커밋된다. -->
+    <context:property-placeholder location="classpath:db.properties,classpath:app.properties" />
 
     <!-- DataSource -->
     <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">

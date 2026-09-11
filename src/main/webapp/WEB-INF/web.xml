@@ -24,6 +24,11 @@
             <param-value>/WEB-INF/spring/appServlet/servlet-context.xml</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
+        <!-- 첨부파일 업로드(오류 등록 시 스크린샷) - Servlet 3.1 표준 멀티파트, 별도 라이브러리 불필요 -->
+        <multipart-config>
+            <max-file-size>10485760</max-file-size>      <!-- 10MB -->
+            <max-request-size>52428800</max-request-size> <!-- 50MB -->
+        </multipart-config>
     </servlet>
 
     <servlet-mapping>
