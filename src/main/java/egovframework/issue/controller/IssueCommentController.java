@@ -17,6 +17,7 @@ import egovframework.issue.dto.request.IssueCommentSaveRequestDTO;
 import egovframework.issue.service.IssueCommentService;
 
 @RestController
+@RequestMapping("/api")
 public class IssueCommentController {
 
     @Autowired

@@ -6,4 +6,13 @@
     <select id="selectDisplayName" parameterType="long" resultType="string">
         SELECT display_name FROM users WHERE id = #{id}
     </select>
+
+    <select id="selectAllForOptions" resultMap="userOptionResultMap">
+        SELECT id, display_name FROM users ORDER BY display_name
+    </select>
+
+    <resultMap id="userOptionResultMap" type="egovframework.user.vo.UserVO">
+        <id     column="id" property="id" />
+        <result column="display_name" property="displayName" />
+    </resultMap>
 </mapper>
