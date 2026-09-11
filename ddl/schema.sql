@@ -1,40 +1,44 @@
--- QA로그 DB 스키마 (MySQL/MariaDB)
--- writing-block.md 원문 합의 내용을 그대로 반영. 컬럼 실제 자료형/길이는 이 파일이 기준.
+-- QA로그 DB 스키마 (PostgreSQL / Supabase)
+-- writing-block.md 원문 합의 내용을 반영. 컬럼 실제 자료형/길이는 이 파일이 기준.
+--
+-- 2026-09-11 MySQL -> PostgreSQL(Supabase) 포팅하면서 발견해 같이 고친 것 (동기에게 전달 완료 필요):
+--   1) issue_histories.old_value/new_value: 원안은 JSON 타입이었는데, 실제 코드(IssueServiceImpl)는
+--      "확인 중" 같은 화면 표시용 순수 문자열을 그대로 저장한다 - JSON 타입 컬럼은 값이 유효한 JSON
+--      이어야 해서(따옴표 없는 문자열은 무효) 이대로면 INSERT 자체가 실패한다. TEXT로 변경.
+--   2) issue_histories.change_group_id: 원안은 ID(숫자) 타입이었는데, 실제 코드는
+--      UUID.randomUUID().toString()로 문자열을 쓴다. VARCHAR(36)으로 변경.
+--   3) MySQL의 "ON UPDATE CURRENT_TIMESTAMP"는 PostgreSQL에 없어 트리거로 대체(파일 하단).
 
 CREATE TABLE users (
-    id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     login_id      VARCHAR(50)     NOT NULL,
     password_hash VARCHAR(255)    NOT NULL,
     display_name  VARCHAR(50)     NOT NULL,
-    created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_users_login_id (login_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    created_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_users_login_id UNIQUE (login_id)
+);
 
 -- 팀 공용 가입 코드. 단일 행만 유지.
 CREATE TABLE team_settings (
-    id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    id                BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     invite_code_hash  VARCHAR(255)    NOT NULL,
-    created_at        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    created_at        TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at        TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE projects (
-    id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name        VARCHAR(200)    NOT NULL,
-    created_by  BIGINT UNSIGNED NOT NULL,
-    created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    CONSTRAINT fk_projects_created_by FOREIGN KEY (created_by) REFERENCES users (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    created_by  BIGINT          NOT NULL REFERENCES users (id),
+    created_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE issues (
-    id                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    issue_number        BIGINT UNSIGNED NOT NULL,
-    project_id          BIGINT UNSIGNED NOT NULL,
+    id                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    issue_number        BIGINT          NOT NULL,
+    project_id          BIGINT          NOT NULL REFERENCES projects (id),
     title               VARCHAR(200)    NULL,
     location            VARCHAR(300)    NULL,
     location_url        VARCHAR(500)    NULL,
@@ -48,64 +52,67 @@ CREATE TABLE issues (
     status              VARCHAR(20)     NOT NULL DEFAULT 'new',
     severity            VARCHAR(20)     NOT NULL DEFAULT 'unspecified',
     priority            VARCHAR(20)     NOT NULL DEFAULT 'unspecified',
-    assignee_id         BIGINT UNSIGNED NULL,
-    created_by          BIGINT UNSIGNED NOT NULL,
-    updated_by          BIGINT UNSIGNED NOT NULL,
-    closed_by           BIGINT UNSIGNED NULL,
-    closed_at           DATETIME        NULL,
-    created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_issues_issue_number (issue_number),
-    KEY idx_issues_project_status_updated (project_id, status, updated_at),
-    KEY idx_issues_project_assignee_status (project_id, assignee_id, status),
-    CONSTRAINT fk_issues_project     FOREIGN KEY (project_id)  REFERENCES projects (id),
-    CONSTRAINT fk_issues_assignee    FOREIGN KEY (assignee_id) REFERENCES users (id),
-    CONSTRAINT fk_issues_created_by  FOREIGN KEY (created_by)  REFERENCES users (id),
-    CONSTRAINT fk_issues_updated_by  FOREIGN KEY (updated_by)  REFERENCES users (id),
-    CONSTRAINT fk_issues_closed_by   FOREIGN KEY (closed_by)   REFERENCES users (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    assignee_id         BIGINT          NULL REFERENCES users (id),
+    created_by          BIGINT          NOT NULL REFERENCES users (id),
+    updated_by          BIGINT          NOT NULL REFERENCES users (id),
+    closed_by           BIGINT          NULL REFERENCES users (id),
+    closed_at           TIMESTAMP       NULL,
+    created_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_issues_issue_number UNIQUE (issue_number)
+);
+
+CREATE INDEX idx_issues_project_status_updated ON issues (project_id, status, updated_at);
+CREATE INDEX idx_issues_project_assignee_status ON issues (project_id, assignee_id, status);
 
 CREATE TABLE issue_attachments (
-    id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    issue_id      BIGINT UNSIGNED NOT NULL,
+    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    issue_id      BIGINT          NOT NULL REFERENCES issues (id),
     original_name VARCHAR(255)    NOT NULL,
     storage_key   VARCHAR(255)    NOT NULL,
     mime_type     VARCHAR(100)    NOT NULL,
-    size_bytes    BIGINT UNSIGNED NOT NULL,
-    uploaded_by   BIGINT UNSIGNED NOT NULL,
-    created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_issue_attachments_issue_created (issue_id, created_at),
-    CONSTRAINT fk_issue_attachments_issue       FOREIGN KEY (issue_id)    REFERENCES issues (id),
-    CONSTRAINT fk_issue_attachments_uploaded_by FOREIGN KEY (uploaded_by) REFERENCES users (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    size_bytes    BIGINT          NOT NULL,
+    uploaded_by   BIGINT          NOT NULL REFERENCES users (id),
+    created_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_issue_attachments_issue_created ON issue_attachments (issue_id, created_at);
 
 CREATE TABLE issue_comments (
-    id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    issue_id    BIGINT UNSIGNED NOT NULL,
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    issue_id    BIGINT          NOT NULL REFERENCES issues (id),
     content     TEXT            NOT NULL,
-    created_by  BIGINT UNSIGNED NOT NULL,
-    created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_issue_comments_issue_created (issue_id, created_at),
-    CONSTRAINT fk_issue_comments_issue      FOREIGN KEY (issue_id)   REFERENCES issues (id),
-    CONSTRAINT fk_issue_comments_created_by FOREIGN KEY (created_by) REFERENCES users (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    created_by  BIGINT          NOT NULL REFERENCES users (id),
+    created_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_issue_comments_issue_created ON issue_comments (issue_id, created_at);
 
 CREATE TABLE issue_histories (
-    id                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    issue_id           BIGINT UNSIGNED NOT NULL,
-    change_group_id    BIGINT UNSIGNED NOT NULL,
+    id                 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    issue_id           BIGINT          NOT NULL REFERENCES issues (id),
+    change_group_id    VARCHAR(36)     NOT NULL,
     event_type         VARCHAR(20)     NOT NULL,
     field_name         VARCHAR(50)     NULL,
-    old_value          JSON            NULL,
-    new_value          JSON            NULL,
-    related_record_id  BIGINT UNSIGNED NULL,
-    actor_id           BIGINT UNSIGNED NOT NULL,
-    created_at         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_issue_histories_issue_created (issue_id, created_at),
-    CONSTRAINT fk_issue_histories_issue    FOREIGN KEY (issue_id) REFERENCES issues (id),
-    CONSTRAINT fk_issue_histories_actor_id FOREIGN KEY (actor_id) REFERENCES users (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    old_value          TEXT            NULL,
+    new_value          TEXT            NULL,
+    related_record_id  BIGINT          NULL,
+    actor_id           BIGINT          NOT NULL REFERENCES users (id),
+    created_at         TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_issue_histories_issue_created ON issue_histories (issue_id, created_at);
+
+-- MySQL의 "ON UPDATE CURRENT_TIMESTAMP" 대체 - updated_at 있는 테이블마다 UPDATE 시 자동 갱신
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_users_updated_at    BEFORE UPDATE ON users    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_team_settings_updated_at BEFORE UPDATE ON team_settings FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_issues_updated_at   BEFORE UPDATE ON issues   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
