@@ -10,6 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -130,6 +132,26 @@ public class MainControllerTest {
                         ProjectStatus.ON_HOLD, ProjectStatus.ARCHIVED)));
     }
 
+    @Test
+    public void projectTotalExcludesArchivedProjects() throws Exception {
+        mockMvc.perform(get("/").session(loggedInSession()))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("activeProjectCount", 1L));
+    }
+
+    @Test
+    public void projectCountsAreProvidedForEveryStatus() throws Exception {
+        Map<String, Long> expectedCounts = new LinkedHashMap<>();
+        expectedCounts.put("in_progress", 1L);
+        expectedCounts.put("maintenance", 0L);
+        expectedCounts.put("on_hold", 0L);
+        expectedCounts.put("archived", 1L);
+
+        mockMvc.perform(get("/").session(loggedInSession()))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("projectCountsByStatus", expectedCounts));
+    }
+
     private MockHttpSession loggedInSession() {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute(SessionKeys.LOGIN_USER_ID, 7L);
@@ -142,11 +164,13 @@ public class MainControllerTest {
             ProjectVO first = new ProjectVO();
             first.setId(11L);
             first.setName("첫 번째 프로젝트");
+            first.setStatus("in_progress");
             first.setOpenIssueCount(2L);
 
             ProjectVO second = new ProjectVO();
             second.setId(22L);
             second.setName("두 번째 프로젝트");
+            second.setStatus("archived");
             second.setOpenIssueCount(0L);
             return asList(first, second);
         }

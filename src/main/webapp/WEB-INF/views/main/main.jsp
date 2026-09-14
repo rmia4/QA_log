@@ -37,14 +37,18 @@
                     <span class="eyebrow">WORKSPACE</span>
                     <h1>프로젝트</h1>
                 </div>
-                <span class="project-total">${fn:length(projects)}</span>
+                <span class="project-total">${activeProjectCount}</span>
             </div>
 
             <nav class="project-list">
                 <c:forEach var="projectStatus" items="${projectListStatuses}">
-                    <details class="project-group project-group-${projectStatus.code}" open>
+                    <details class="project-group project-group-${projectStatus.code}"
+                             data-project-status="${projectStatus.code}" open>
                         <summary class="project-group-heading">
-                            (<c:out value="${projectStatus.label}" />)
+                            <span class="project-group-title">
+                                (<c:out value="${projectStatus.label}" />)
+                                <span class="project-group-count">${projectCountsByStatus[projectStatus.code]}개</span>
+                            </span>
                         </summary>
                         <div class="project-group-items">
                             <c:forEach var="project" items="${projects}">
@@ -299,5 +303,46 @@
             </div>
         </dialog>
     </c:if>
+    <script>
+        (function () {
+            var storageKey = 'qalog.projectGroups.open.v1';
+            var groups = document.querySelectorAll('[data-project-status]');
+            var savedState = {};
+            var ready = false;
+
+            try {
+                savedState = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            } catch (error) {
+                savedState = {};
+            }
+
+            Array.prototype.forEach.call(groups, function (group) {
+                var status = group.getAttribute('data-project-status');
+                if (Object.prototype.hasOwnProperty.call(savedState, status)) {
+                    group.open = savedState[status];
+                }
+
+                group.addEventListener('toggle', function () {
+                    if (!ready) {
+                        return;
+                    }
+
+                    var currentState = {};
+                    Array.prototype.forEach.call(groups, function (currentGroup) {
+                        currentState[currentGroup.getAttribute('data-project-status')] = currentGroup.open;
+                    });
+                    try {
+                        localStorage.setItem(storageKey, JSON.stringify(currentState));
+                    } catch (error) {
+                        // 저장 공간을 사용할 수 없어도 목록 펼침 기능은 그대로 사용한다.
+                    }
+                });
+            });
+
+            window.requestAnimationFrame(function () {
+                ready = true;
+            });
+        }());
+    </script>
 </body>
 </html>
