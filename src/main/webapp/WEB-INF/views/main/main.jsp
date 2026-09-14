@@ -53,7 +53,12 @@
                         <span class="project-icon" aria-hidden="true"><c:out value="${fn:substring(project.name, 0, 1)}" /></span>
                         <span class="project-copy">
                             <strong><c:out value="${project.name}" /></strong>
-                            <small>미종료 오류 ${project.openIssueCount}건</small>
+                            <small>
+                                <span class="project-status project-status-${project.status}">
+                                    <c:out value="${project.statusLabel}" />
+                                </span>
+                                <span>미종료 오류 ${project.openIssueCount}건</span>
+                            </small>
                         </span>
                         <span class="project-count">${project.openIssueCount}</span>
                     </a>
@@ -69,9 +74,9 @@
         </aside>
 
         <section class="issue-panel" aria-label="오류 목록">
-            <c:if test="${param.projectDeleteError == 'hasIssues'}">
+            <c:if test="${param.projectArchiveError == 'hasOpenIssues'}">
                 <div class="page-alert" role="alert">
-                    등록된 오류가 있는 프로젝트는 삭제할 수 없습니다.
+                    종료되지 않은 오류가 있는 프로젝트는 보관할 수 없습니다.
                 </div>
             </c:if>
             <c:if test="${param.issueCreateError == 'duplicate'}">
@@ -225,6 +230,14 @@
             <label class="field-label" for="createProjectName">프로젝트명</label>
             <input id="createProjectName" class="text-input" type="text" name="name"
                    maxlength="200" required autocomplete="off" placeholder="프로젝트명을 입력하세요">
+            <label class="field-label field-label-spaced" for="createProjectStatus">프로젝트 상태</label>
+            <select id="createProjectStatus" class="text-input" name="status">
+                <c:forEach var="statusOption" items="${projectStatusOptions}">
+                    <option value="${statusOption.code}" ${statusOption.code == 'working' ? 'selected' : ''}>
+                        <c:out value="${statusOption.label}" />
+                    </option>
+                </c:forEach>
+            </select>
             <div class="dialog-actions">
                 <button type="button" class="action-button"
                         onclick="document.getElementById('createProjectDialog').close()">취소</button>
@@ -248,6 +261,18 @@
                     <label class="field-label" for="editProjectName">프로젝트명</label>
                     <input id="editProjectName" class="text-input" type="text" name="name"
                            value="${fn:escapeXml(selectedProject.name)}" maxlength="200" required autocomplete="off">
+                    <label class="field-label field-label-spaced" for="editProjectStatus">프로젝트 상태</label>
+                    <select id="editProjectStatus" class="text-input" name="status">
+                        <c:if test="${selectedProject.status == 'archived'}">
+                            <option value="" selected>보관 상태 유지</option>
+                        </c:if>
+                        <c:forEach var="statusOption" items="${projectStatusOptions}">
+                            <option value="${statusOption.code}"
+                                    ${statusOption.code == selectedProject.status ? 'selected' : ''}>
+                                <c:out value="${statusOption.label}" />
+                            </option>
+                        </c:forEach>
+                    </select>
                     <div class="dialog-actions">
                         <button type="button" class="action-button"
                                 onclick="document.getElementById('editProjectDialog').close()">취소</button>
@@ -256,12 +281,13 @@
                 </form>
                 <div class="danger-zone">
                     <div>
-                        <strong>프로젝트 삭제</strong>
-                        <p>등록된 오류가 없는 프로젝트만 삭제할 수 있습니다.</p>
+                        <strong>프로젝트 보관</strong>
+                        <p>모든 오류가 종료된 프로젝트만 보관할 수 있습니다.</p>
                     </div>
-                    <form action="<c:url value='/projects/${selectedProject.id}/delete' />" method="post"
-                          onsubmit="return confirm('이 프로젝트를 삭제하시겠습니까?');">
-                        <button type="submit" class="action-button action-button-danger">삭제</button>
+                    <form action="<c:url value='/projects/${selectedProject.id}/archive' />" method="post"
+                          onsubmit="return confirm('이 프로젝트를 보관하시겠습니까?');">
+                        <button type="submit" class="action-button action-button-danger"
+                                ${selectedProject.status == 'archived' ? 'disabled' : ''}>보관</button>
                     </form>
                 </div>
             </div>

@@ -10,9 +10,9 @@ public interface ProjectService {
 
     ProjectVO getProject(Long id);
 
-    ProjectVO createProject(String name, Long createdBy);
+    ProjectVO createProject(String name, String status, Long createdBy);
 
-    void updateProject(Long id, String name);
+    void updateProject(Long id, String name, String status);
 
-    boolean deleteProject(Long id);
+    boolean archiveProject(Long id);
 }

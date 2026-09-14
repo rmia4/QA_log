@@ -108,9 +108,9 @@ public class IssueRegisterViewControllerTest {
             return project;
         }
 
-        @Override public ProjectVO createProject(String name, Long createdBy) { throw new UnsupportedOperationException(); }
-        @Override public void updateProject(Long id, String name) { throw new UnsupportedOperationException(); }
-        @Override public boolean deleteProject(Long id) { throw new UnsupportedOperationException(); }
+        @Override public ProjectVO createProject(String name, String status, Long createdBy) { throw new UnsupportedOperationException(); }
+        @Override public void updateProject(Long id, String name, String status) { throw new UnsupportedOperationException(); }
+        @Override public boolean archiveProject(Long id) { throw new UnsupportedOperationException(); }
     }
 
     private static final class UserFixturesMapper implements UserMapper {

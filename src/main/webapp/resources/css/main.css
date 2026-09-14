@@ -103,7 +103,12 @@ a { color: inherit; text-decoration: none; }
 .project-item.is-selected .project-icon { color: #fff; background: var(--blue-600); }
 .project-copy { min-width: 0; display: grid; gap: 4px; }
 .project-copy strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
-.project-copy small { color: var(--ink-500); font-size: 12px; }
+.project-copy small { display: flex; align-items: center; gap: 6px; color: var(--ink-500); font-size: 12px; }
+.project-status { padding: 2px 6px; border-radius: 999px; font-size: 10px; font-weight: 800; }
+.project-status-working { color: #1559c7; background: #e9f1ff; }
+.project-status-in_progress { color: #8a5b00; background: #fff4ce; }
+.project-status-maintenance { color: #8146ad; background: #f4eaff; }
+.project-status-archived { color: #697289; background: #eceff4; }
 .project-count { min-width: 24px; color: var(--ink-500); font-size: 12px; text-align: right; }
 .project-item.is-selected .project-count { color: var(--blue-700); font-weight: 800; }
 
@@ -125,6 +130,7 @@ a { color: inherit; text-decoration: none; }
 .action-button-primary:hover { background: var(--blue-700); border-color: var(--blue-700); }
 .action-button-danger { color: #b33f3f; }
 .action-button-danger:hover { color: #9f3030; background: #fff4f4; border-color: #edc5c5; }
+.action-button:disabled { opacity: .5; cursor: not-allowed; }
 .page-alert {
     margin-bottom: 18px;
     padding: 13px 15px;
@@ -234,6 +240,7 @@ a { color: inherit; text-decoration: none; }
 }
 .dialog-close:hover { color: var(--ink-900); background: #f1f3f7; }
 .field-label { display: block; margin-bottom: 8px; color: var(--ink-700); font-size: 13px; font-weight: 750; }
+.field-label-spaced { margin-top: 18px; }
 .text-input {
     width: 100%;
     height: 44px;

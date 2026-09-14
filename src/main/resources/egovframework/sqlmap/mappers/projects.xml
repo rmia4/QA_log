@@ -5,6 +5,7 @@
     <resultMap id="projectResultMap" type="egovframework.project.vo.ProjectVO">
         <id     column="id"          property="id" />
         <result column="name"        property="name" />
+        <result column="status"      property="status" />
         <result column="created_by"  property="createdBy" />
         <result column="created_at"  property="createdAt" />
         <result column="updated_at"  property="updatedAt" />
@@ -13,38 +14,42 @@
 
     <select id="selectProjectList" resultMap="projectResultMap">
         SELECT
-            p.id, p.name, p.created_by, p.created_at, p.updated_at,
+            p.id, p.name, p.status, p.created_by, p.created_at, p.updated_at,
             (SELECT COUNT(*) FROM issues i WHERE i.project_id = p.id AND i.status != 'closed') AS open_issue_count
         FROM projects p
         ORDER BY p.created_at DESC
     </select>
 
     <select id="selectProject" parameterType="long" resultMap="projectResultMap">
-        SELECT id, name, created_by, created_at, updated_at, 0 AS open_issue_count
+        SELECT id, name, status, created_by, created_at, updated_at, 0 AS open_issue_count
         FROM projects
         WHERE id = #{id}
     </select>
 
     <insert id="insertProject" parameterType="egovframework.project.vo.ProjectVO" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO projects (name, created_by)
-        VALUES (#{name}, #{createdBy})
+        INSERT INTO projects (name, status, created_by)
+        VALUES (#{name}, #{status}, #{createdBy})
     </insert>
 
     <update id="updateProject">
         UPDATE projects
         SET name = #{name}
+        <if test="status != null">
+            , status = #{status}
+        </if>
         WHERE id = #{id}
     </update>
 
-    <select id="countIssuesByProjectId" parameterType="long" resultType="int">
-        SELECT COUNT(*)
-        FROM issues
-        WHERE project_id = #{projectId}
-    </select>
-
-    <delete id="deleteProject" parameterType="long">
-        DELETE FROM projects
+    <update id="archiveProject" parameterType="long">
+        UPDATE projects
+        SET status = 'archived'
         WHERE id = #{id}
-    </delete>
+          AND NOT EXISTS (
+              SELECT 1
+              FROM issues
+              WHERE project_id = #{id}
+                AND status != 'closed'
+          )
+    </update>
 
 </mapper>
