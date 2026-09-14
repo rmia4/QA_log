@@ -38,6 +38,11 @@ public class AttachmentStorageServiceImpl implements AttachmentStorageService {
         return new StoredAttachment(file.getOriginalFilename(), storageKey, detected.mimeType, file.getSize());
     }
 
+    @Override
+    public Path resolve(Long issueId, String storageKey) {
+        return Paths.get(storagePath, String.valueOf(issueId), storageKey);
+    }
+
     /**
      * 클라이언트가 보낸 Content-Type/파일명 확장자는 신뢰하지 않고, 파일 앞부분 매직 바이트로 실제
      * 형식을 판별한다. 허용 형식(png/jpg/gif/webp) 밖이면 저장하지 않는다.

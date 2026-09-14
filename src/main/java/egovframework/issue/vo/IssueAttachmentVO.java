@@ -20,4 +20,7 @@ public class IssueAttachmentVO {
     private Long sizeBytes;
     private Long uploadedBy;
     private LocalDateTime createdAt;
+
+    /** null=오류 본문 전체에 딸린 일반 첨부, "expected_result"/"actual_result"=해당 필드 전용 첨부 */
+    private String context;
 }

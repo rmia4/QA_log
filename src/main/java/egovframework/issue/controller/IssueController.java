@@ -44,9 +44,11 @@ public class IssueController {
     public Long create(@PathVariable Long projectId,
             IssueSaveRequestDTO request,
             @RequestParam(value = "files", required = false) List<MultipartFile> files,
+            @RequestParam(value = "expectedResultFiles", required = false) List<MultipartFile> expectedResultFiles,
+            @RequestParam(value = "actualResultFiles", required = false) List<MultipartFile> actualResultFiles,
             HttpSession session) throws IOException {
         Long actorId = currentUserId(session);
-        return issueService.createIssue(projectId, request, files, actorId);
+        return issueService.createIssue(projectId, request, files, expectedResultFiles, actualResultFiles, actorId);
     }
 
     @RequestMapping(value = "/issues/{id}", method = RequestMethod.PUT)

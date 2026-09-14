@@ -11,3 +11,6 @@ target/
 
 # DB 접속정보 등 민감 설정 - db.properties.example만 커밋하고 실제 db.properties는 각자 로컬에 생성
 src/main/resources/db.properties
+
+# 첨부파일 로컬 저장 경로(attachment.storage.path) - 실행 중 생성되는 런타임 데이터, 각자 로컬에만 존재
+uploads/

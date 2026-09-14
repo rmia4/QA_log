@@ -55,7 +55,8 @@ public class IssueServiceImpl implements IssueService {
     }
 
     @Override
-    public Long createIssue(Long projectId, IssueSaveRequestDTO request, List<MultipartFile> files, Long actorId)
+    public Long createIssue(Long projectId, IssueSaveRequestDTO request, List<MultipartFile> files,
+            List<MultipartFile> expectedResultFiles, List<MultipartFile> actualResultFiles, Long actorId)
             throws IOException {
         IssueVO issue = new IssueVO();
         issue.setProjectId(projectId);
@@ -81,16 +82,27 @@ public class IssueServiceImpl implements IssueService {
         String changeGroupId = UUID.randomUUID().toString();
         recordEvent(issue.getId(), changeGroupId, IssueEventType.CREATED.getCode(), null, actorId);
 
-        if (files != null) {
-            for (MultipartFile file : files) {
-                if (file == null || file.isEmpty()) {
-                    continue;
-                }
-                saveAttachment(issue.getId(), changeGroupId, file, actorId);
-            }
-        }
+        // 등록과 동시에 첨부한 파일은 별도 "첨부" 이력을 남기지 않는다 - "등록했다" 한 줄로 충분하고
+        // 두 줄로 나뉘어 보이는 게 오히려 헷갈린다는 피드백으로 통합함(오류상세 화면 실사용 피드백).
+        // 등록 이후 시점에 첨부가 추가되는 기능이 생기면 그때는 별도 이력을 남긴다.
+        saveAllAttachmentFiles(issue.getId(), files, actorId, null);
+        saveAllAttachmentFiles(issue.getId(), expectedResultFiles, actorId, "expected_result");
+        saveAllAttachmentFiles(issue.getId(), actualResultFiles, actorId, "actual_result");
 
         return issue.getId();
+    }
+
+    private void saveAllAttachmentFiles(Long issueId, List<MultipartFile> files, Long actorId, String context)
+            throws IOException {
+        if (files == null) {
+            return;
+        }
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                continue;
+            }
+            saveAttachmentFile(issueId, file, actorId, context);
+        }
     }
 
     @Override
@@ -191,7 +203,9 @@ public class IssueServiceImpl implements IssueService {
         return issueHistoryMapper.selectHistories(id);
     }
 
-    private void saveAttachment(Long issueId, String changeGroupId, MultipartFile file, Long actorId) throws IOException {
+    /** 첨부 파일 저장 + DB 행 기록만 한다(이력 없음) - 오류 등록 시점처럼 "created" 이력 하나로 충분한 경우. */
+    private IssueAttachmentVO saveAttachmentFile(Long issueId, MultipartFile file, Long actorId, String context)
+            throws IOException {
         StoredAttachment stored = attachmentStorageService.store(issueId, file);
 
         IssueAttachmentVO attachment = new IssueAttachmentVO();
@@ -201,8 +215,15 @@ public class IssueServiceImpl implements IssueService {
         attachment.setMimeType(stored.getMimeType());
         attachment.setSizeBytes(stored.getSizeBytes());
         attachment.setUploadedBy(actorId);
+        attachment.setContext(context);
         issueAttachmentMapper.insertAttachment(attachment);
+        return attachment;
+    }
 
+    /** 첨부 저장 + "첨부 추가" 이력까지 남긴다 - 등록 이후(기존 오류에 첨부 추가) 시나리오에서 쓴다. */
+    private void saveAttachment(Long issueId, String changeGroupId, MultipartFile file, Long actorId, String context)
+            throws IOException {
+        IssueAttachmentVO attachment = saveAttachmentFile(issueId, file, actorId, context);
         recordEvent(issueId, changeGroupId, IssueEventType.ATTACHMENT_ADDED.getCode(), attachment.getId(), actorId);
     }
 
