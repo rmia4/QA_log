@@ -1,6 +1,8 @@
 package egovframework.main.controller;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
@@ -37,13 +39,22 @@ public class MainController {
 
         List<ProjectVO> projects = projectService.getProjectList();
         model.addAttribute("projects", projects);
+        Map<String, Long> projectCountsByStatus = new LinkedHashMap<>();
+        for (ProjectStatus status : ProjectStatus.values()) {
+            projectCountsByStatus.put(status.getCode(), 0L);
+        }
         long activeProjectCount = 0L;
         for (ProjectVO project : projects) {
+            String status = project.getStatus();
+            if (projectCountsByStatus.containsKey(status)) {
+                projectCountsByStatus.put(status, projectCountsByStatus.get(status) + 1L);
+            }
             if (!ProjectStatus.ARCHIVED.getCode().equals(project.getStatus())) {
                 activeProjectCount++;
             }
         }
         model.addAttribute("activeProjectCount", activeProjectCount);
+        model.addAttribute("projectCountsByStatus", projectCountsByStatus);
         model.addAttribute("projectListStatuses", java.util.Arrays.asList(ProjectStatus.values()));
         model.addAttribute("projectStatusOptions", ProjectStatus.activeValues());
         String listMode = "closed".equals(view) ? "closed" : "active";

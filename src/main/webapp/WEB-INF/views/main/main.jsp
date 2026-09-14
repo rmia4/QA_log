@@ -45,7 +45,10 @@
                     <details class="project-group project-group-${projectStatus.code}"
                              data-project-status="${projectStatus.code}" open>
                         <summary class="project-group-heading">
-                            (<c:out value="${projectStatus.label}" />)
+                            <span class="project-group-title">
+                                (<c:out value="${projectStatus.label}" />)
+                                <span class="project-group-count">${projectCountsByStatus[projectStatus.code]}개</span>
+                            </span>
                         </summary>
                         <div class="project-group-items">
                             <c:forEach var="project" items="${projects}">
