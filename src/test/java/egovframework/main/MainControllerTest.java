@@ -27,6 +27,8 @@ import egovframework.main.controller.MainController;
 import egovframework.project.gubun.ProjectStatus;
 import egovframework.project.service.ProjectService;
 import egovframework.project.vo.ProjectVO;
+import egovframework.user.mapper.UserMapper;
+import egovframework.user.vo.UserVO;
 
 public class MainControllerTest {
 
@@ -49,6 +51,7 @@ public class MainControllerTest {
         MainController controller = new MainController();
         ReflectionTestUtils.setField(controller, "projectService", new ProjectFixturesService());
         ReflectionTestUtils.setField(controller, "issueListService", new IssueListFixturesService());
+        ReflectionTestUtils.setField(controller, "userMapper", new UserFixturesMapper());
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
@@ -66,6 +69,8 @@ public class MainControllerTest {
                 .andExpect(view().name("main/main"))
                 .andExpect(model().attribute("selectedProjectId", 11L))
                 .andExpect(model().attributeExists("projects"))
+                .andExpect(model().attributeExists("users"))
+                .andExpect(model().attribute("canEditProject", true))
                 .andExpect(request().sessionAttribute(SessionKeys.LOGIN_USER_ID, 7L));
     }
 
@@ -181,19 +186,38 @@ public class MainControllerTest {
         }
 
         @Override
-        public ProjectVO createProject(String name, String status, Long createdBy) {
+        public ProjectVO createProject(String name, String status, Long createdBy, List<Long> assigneeIds) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void updateProject(Long id, String name, String status) {
+        public void updateProject(Long id, String name, String status, List<Long> assigneeIds, Long actorId) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean archiveProject(Long id) {
+        public boolean archiveProject(Long id, Long actorId) {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public boolean isProjectAssignee(Long projectId, Long userId) {
+            return Long.valueOf(7L).equals(userId);
+        }
+    }
+
+    private static final class UserFixturesMapper implements UserMapper {
+        @Override
+        public List<UserVO> selectAllForOptions() {
+            UserVO user = new UserVO();
+            user.setId(7L);
+            user.setDisplayName("테스터");
+            return singletonList(user);
+        }
+
+        @Override public UserVO selectByLoginId(String loginId) { throw new UnsupportedOperationException(); }
+        @Override public void insertUser(UserVO user) { throw new UnsupportedOperationException(); }
+        @Override public String selectDisplayName(Long id) { throw new UnsupportedOperationException(); }
     }
 
     private final class IssueListFixturesService implements IssueListService {

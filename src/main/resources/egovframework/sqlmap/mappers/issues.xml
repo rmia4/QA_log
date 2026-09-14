@@ -165,4 +165,10 @@
         WHERE id = #{id} AND updated_at = #{expectedUpdatedAt}
     </update>
 
+    <select id="selectProjectId" parameterType="long" resultType="long">
+        SELECT project_id
+        FROM issues
+        WHERE id = #{id}
+    </select>
+
 </mapper>

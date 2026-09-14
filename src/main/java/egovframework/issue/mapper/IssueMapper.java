@@ -18,6 +18,9 @@ public interface IssueMapper {
     /** 담당자명·등록자명·프로젝트명까지 조인해서 화면 하나 그리는 데 필요한 전부를 반환. 첨부목록은 별도 쿼리(IssueAttachmentMapper). */
     IssueDetailResponseDTO selectIssueDetail(Long id);
 
+    /** 댓글 등 프로젝트 단위 권한 검사에 사용하는 최소 조회. */
+    Long selectProjectId(Long id);
+
     /** 등록. useGeneratedKeys로 issue.getId()에 생성된 PK가 채워진다. */
     void insertIssue(IssueVO issue);
 

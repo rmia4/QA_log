@@ -18,4 +18,12 @@ public interface ProjectMapper {
             @Param("status") String status);
 
     int archiveProject(@Param("id") Long id);
+
+    List<Long> selectProjectAssigneeIds(Long projectId);
+
+    void insertProjectAssignee(@Param("projectId") Long projectId, @Param("userId") Long userId);
+
+    void deleteProjectAssignees(Long projectId);
+
+    boolean existsProjectAssignee(@Param("projectId") Long projectId, @Param("userId") Long userId);
 }

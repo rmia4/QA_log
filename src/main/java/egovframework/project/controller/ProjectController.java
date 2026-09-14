@@ -30,31 +30,35 @@ public class ProjectController {
 
     @PostMapping("/projects")
     public String create(@RequestParam("name") String name,
-            @RequestParam(value = "status", required = false) String status, HttpSession session) {
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam("assigneeIds") List<Long> assigneeIds, HttpSession session) {
         Long userId = loginUserId(session);
         if (userId == null) {
             return "redirect:/login";
         }
-        ProjectVO project = projectService.createProject(name, status, userId);
+        ProjectVO project = projectService.createProject(name, status, userId, assigneeIds);
         return "redirect:/?projectId=" + project.getId();
     }
 
     @PostMapping("/projects/{id}/edit")
     public String update(@PathVariable("id") Long id, @RequestParam("name") String name,
-            @RequestParam(value = "status", required = false) String status, HttpSession session) {
-        if (loginUserId(session) == null) {
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam("assigneeIds") List<Long> assigneeIds, HttpSession session) {
+        Long userId = loginUserId(session);
+        if (userId == null) {
             return "redirect:/login";
         }
-        projectService.updateProject(id, name, status);
+        projectService.updateProject(id, name, status, assigneeIds, userId);
         return "redirect:/?projectId=" + id;
     }
 
     @PostMapping("/projects/{id}/archive")
     public String archive(@PathVariable("id") Long id, HttpSession session) {
-        if (loginUserId(session) == null) {
+        Long userId = loginUserId(session);
+        if (userId == null) {
             return "redirect:/login";
         }
-        if (!projectService.archiveProject(id)) {
+        if (!projectService.archiveProject(id, userId)) {
             return "redirect:/?projectId=" + id + "&projectArchiveError=hasOpenIssues";
         }
         return "redirect:/";

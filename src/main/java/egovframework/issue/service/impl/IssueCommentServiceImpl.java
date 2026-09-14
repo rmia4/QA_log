@@ -13,16 +13,23 @@ import org.springframework.web.multipart.MultipartFile;
 
 import egovframework.issue.dto.IssueCommentResponseDTO;
 import egovframework.issue.exception.EmptyCommentException;
+import egovframework.issue.exception.IssueForbiddenException;
+import egovframework.issue.exception.IssueNotFoundException;
 import egovframework.issue.gubun.IssueEventType;
 import egovframework.issue.mapper.IssueAttachmentMapper;
 import egovframework.issue.mapper.IssueCommentMapper;
 import egovframework.issue.mapper.IssueHistoryMapper;
+<<<<<<< HEAD
+import egovframework.issue.mapper.IssueMapper;
+=======
 import egovframework.issue.service.AttachmentStorageService;
+>>>>>>> origin/main
 import egovframework.issue.service.IssueCommentService;
 import egovframework.issue.service.StoredAttachment;
 import egovframework.issue.vo.IssueAttachmentVO;
 import egovframework.issue.vo.IssueCommentVO;
 import egovframework.issue.vo.IssueHistoryVO;
+import egovframework.project.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -32,8 +39,13 @@ public class IssueCommentServiceImpl implements IssueCommentService {
 
     private final IssueCommentMapper issueCommentMapper;
     private final IssueHistoryMapper issueHistoryMapper;
+<<<<<<< HEAD
+    private final IssueMapper issueMapper;
+    private final ProjectService projectService;
+=======
     private final IssueAttachmentMapper issueAttachmentMapper;
     private final AttachmentStorageService attachmentStorageService;
+>>>>>>> origin/main
 
     @Override
     @Transactional(readOnly = true)
@@ -49,7 +61,18 @@ public class IssueCommentServiceImpl implements IssueCommentService {
     }
 
     @Override
+<<<<<<< HEAD
+    public Long addComment(Long issueId, String content, Long actorId) {
+        Long projectId = issueMapper.selectProjectId(issueId);
+        if (projectId == null) {
+            throw new IssueNotFoundException(issueId);
+        }
+        if (!projectService.isProjectAssignee(projectId, actorId)) {
+            throw new IssueForbiddenException(issueId);
+        }
+=======
     public Long addComment(Long issueId, String content, List<MultipartFile> files, Long actorId) throws IOException {
+>>>>>>> origin/main
         if (content == null || content.trim().isEmpty()) {
             throw new EmptyCommentException();
         }

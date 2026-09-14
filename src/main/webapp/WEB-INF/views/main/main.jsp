@@ -71,6 +71,7 @@
                                         <span class="project-copy">
                                             <strong><c:out value="${project.name}" /></strong>
                                             <small>미종료 오류 ${project.openIssueCount}건</small>
+                                            <small class="project-assignees">담당자 <c:out value="${empty project.assigneeNames ? '미지정' : project.assigneeNames}" /></small>
                                         </span>
                                         <span class="project-count">${project.openIssueCount}</span>
                                     </a>
@@ -111,8 +112,10 @@
                             <p class="heading-description">발견된 오류의 처리 상태와 담당자를 확인하세요.</p>
                         </div>
                         <div class="issue-actions" aria-label="선택한 프로젝트 작업">
-                            <button type="button" class="action-button"
-                                    onclick="document.getElementById('editProjectDialog').showModal()">프로젝트 편집</button>
+                            <c:if test="${canEditProject}">
+                                <button type="button" class="action-button"
+                                        onclick="document.getElementById('editProjectDialog').showModal()">프로젝트 편집</button>
+                            </c:if>
                             <a class="action-button issue-create-button"
                                href="<c:url value='/projects/${selectedProject.id}/issues/new' />">
                                 <span aria-hidden="true">＋</span> 오류 추가
@@ -244,7 +247,7 @@
     </main>
 
     <dialog id="createProjectDialog" class="project-dialog">
-        <form action="<c:url value='/projects' />" method="post">
+        <form action="<c:url value='/projects' />" method="post" data-requires-assignee>
             <div class="dialog-heading">
                 <div>
                     <span class="eyebrow">NEW PROJECT</span>
@@ -264,6 +267,19 @@
                     </option>
                 </c:forEach>
             </select>
+            <fieldset class="assignee-fieldset">
+                <legend>프로젝트 담당자</legend>
+                <p>한 명 이상 선택해 주세요.</p>
+                <div class="assignee-options">
+                    <c:forEach var="user" items="${users}">
+                        <label class="assignee-option">
+                            <input type="checkbox" name="assigneeIds" value="${user.id}"
+                                   ${user.id == loginUserId ? 'checked' : ''}>
+                            <span><c:out value="${user.displayName}" /></span>
+                        </label>
+                    </c:forEach>
+                </div>
+            </fieldset>
             <div class="dialog-actions">
                 <button type="button" class="action-button"
                         onclick="document.getElementById('createProjectDialog').close()">취소</button>
@@ -272,7 +288,7 @@
         </form>
     </dialog>
 
-    <c:if test="${not empty selectedProject}">
+    <c:if test="${not empty selectedProject and canEditProject}">
         <dialog id="editProjectDialog" class="project-dialog">
             <div class="dialog-body">
                 <div class="dialog-heading">
@@ -283,7 +299,7 @@
                     <button type="button" class="dialog-close"
                         onclick="document.getElementById('editProjectDialog').close()" aria-label="닫기">×</button>
                 </div>
-                <form action="<c:url value='/projects/${selectedProject.id}/edit' />" method="post">
+                <form action="<c:url value='/projects/${selectedProject.id}/edit' />" method="post" data-requires-assignee>
                     <label class="field-label" for="editProjectName">프로젝트명</label>
                     <input id="editProjectName" class="text-input" type="text" name="name"
                            value="${fn:escapeXml(selectedProject.name)}" maxlength="200" required autocomplete="off">
@@ -299,6 +315,25 @@
                             </option>
                         </c:forEach>
                     </select>
+                    <fieldset class="assignee-fieldset">
+                        <legend>프로젝트 담당자</legend>
+                        <p>한 명 이상 선택해 주세요.</p>
+                        <div class="assignee-options">
+                            <c:forEach var="user" items="${users}">
+                                <c:set var="isSelectedAssignee" value="false" />
+                                <c:forEach var="selectedAssigneeId" items="${selectedProject.assigneeIds}">
+                                    <c:if test="${selectedAssigneeId == user.id}">
+                                        <c:set var="isSelectedAssignee" value="true" />
+                                    </c:if>
+                                </c:forEach>
+                                <label class="assignee-option">
+                                    <input type="checkbox" name="assigneeIds" value="${user.id}"
+                                           ${isSelectedAssignee ? 'checked' : ''}>
+                                    <span><c:out value="${user.displayName}" /></span>
+                                </label>
+                            </c:forEach>
+                        </div>
+                    </fieldset>
                     <div class="dialog-actions">
                         <button type="button" class="action-button"
                                 onclick="document.getElementById('editProjectDialog').close()">취소</button>
@@ -384,6 +419,15 @@
                     projectSearchEmpty.hidden = visibleProjectCount !== 0;
                 });
             }
+
+            Array.prototype.forEach.call(document.querySelectorAll('[data-requires-assignee]'), function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.querySelector('input[name="assigneeIds"]:checked')) {
+                        event.preventDefault();
+                        window.alert('프로젝트 담당자를 한 명 이상 선택해 주세요.');
+                    }
+                });
+            });
 
             var issueSearchInput = document.getElementById('issueSearchInput');
             var issueRows = document.querySelectorAll('.issue-row');
