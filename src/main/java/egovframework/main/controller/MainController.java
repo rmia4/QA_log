@@ -37,6 +37,13 @@ public class MainController {
 
         List<ProjectVO> projects = projectService.getProjectList();
         model.addAttribute("projects", projects);
+        long activeProjectCount = 0L;
+        for (ProjectVO project : projects) {
+            if (!ProjectStatus.ARCHIVED.getCode().equals(project.getStatus())) {
+                activeProjectCount++;
+            }
+        }
+        model.addAttribute("activeProjectCount", activeProjectCount);
         model.addAttribute("projectListStatuses", java.util.Arrays.asList(ProjectStatus.values()));
         model.addAttribute("projectStatusOptions", ProjectStatus.activeValues());
         String listMode = "closed".equals(view) ? "closed" : "active";

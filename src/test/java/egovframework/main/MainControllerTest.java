@@ -130,6 +130,13 @@ public class MainControllerTest {
                         ProjectStatus.ON_HOLD, ProjectStatus.ARCHIVED)));
     }
 
+    @Test
+    public void projectTotalExcludesArchivedProjects() throws Exception {
+        mockMvc.perform(get("/").session(loggedInSession()))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("activeProjectCount", 1L));
+    }
+
     private MockHttpSession loggedInSession() {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute(SessionKeys.LOGIN_USER_ID, 7L);
@@ -142,11 +149,13 @@ public class MainControllerTest {
             ProjectVO first = new ProjectVO();
             first.setId(11L);
             first.setName("첫 번째 프로젝트");
+            first.setStatus("in_progress");
             first.setOpenIssueCount(2L);
 
             ProjectVO second = new ProjectVO();
             second.setId(22L);
             second.setName("두 번째 프로젝트");
+            second.setStatus("archived");
             second.setOpenIssueCount(0L);
             return asList(first, second);
         }
