@@ -255,7 +255,14 @@
         dropzone.classList.remove('dragover');
         addFiles(e.dataTransfer.files);
       });
-      fileInput.addEventListener('change', function () { addFiles(fileInput.files); fileInput.value = ''; });
+      fileInput.addEventListener('change', function () {
+        // fileInput.files는 일부 브라우저에서 fileInput 자신과 연결된 살아있는(live) 참조라서,
+        // 미리 변수에 담아둬도 이후 fileInput.value를 지우면 같이 비어버린다.
+        // File 객체 자체를 별도 배열로 복사해 완전히 분리한 뒤에 초기화해야 한다.
+        var picked = Array.prototype.slice.call(fileInput.files);
+        fileInput.value = '';
+        addFiles(picked);
+      });
 
       function addFiles(fileArrayLike) {
         var rejected = [];
