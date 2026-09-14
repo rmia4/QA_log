@@ -9,7 +9,8 @@
            http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
 
     <!-- db.properties는 .gitignore 대상 - db.properties.example을 복사해 각자 로컬에 만든다.
-         app.properties는 민감하지 않은 설정이라 git에 커밋된다. -->
+         DB 접속정보뿐 아니라 attachment.storage.path(로컬 파일시스템 절대경로)도 사람마다 값이
+         달라야 해서 여기 둔다. app.properties는 모두가 같은 값을 써도 되는 설정만 담아 git에 커밋한다. -->
     <context:property-placeholder location="classpath:db.properties,classpath:app.properties" />
 
     <!-- DataSource -->

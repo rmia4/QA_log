@@ -6,3 +6,13 @@ jdbc.driver=org.postgresql.Driver
 jdbc.url=jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres?sslmode=require
 jdbc.username=postgres
 jdbc.password=
+
+# 첨부파일이 실제로 저장되는 로컬 경로 - 반드시 절대경로로 적으세요. 상대경로(예: ./uploads)를 쓰면
+# mvn tomcat7:run을 실행하는 폴더가 매번 다를 때마다 저장 위치가 달라져서, 예전에 올린 첨부파일을
+# 못 찾는 문제가 생깁니다(2026-09-14 실사용 중 발견).
+#
+# 중요: 경로에 한글 등 비ASCII 문자를 넣지 마세요. 자바 .properties 파일은 기본적으로 ISO-8859-1로
+# 읽히는데, 여기에 한글(예: 프로젝트 폴더명 "NC이슈노트")이 섞여 있으면 실제로는 깨진 이름의 폴더가
+# 만들어져서 첨부파일을 영영 못 찾게 됩니다(위 절대경로 안내를 처음 적용했을 때 바로 이 문제로
+# 재현됨). 아래처럼 프로젝트 폴더 밖의, 영문/숫자로만 된 별도 경로를 쓰세요.
+attachment.storage.path=C:/Users/본인계정/qalog-uploads
