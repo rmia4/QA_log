@@ -9,8 +9,23 @@
            http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
 
     <!-- db.properties는 .gitignore 대상 - db.properties.example을 복사해 각자 로컬에 만든다.
-         app.properties는 민감하지 않은 설정이라 git에 커밋된다. -->
-    <context:property-placeholder location="classpath:db.properties,classpath:app.properties" />
+         DB 접속정보뿐 아니라 attachment.storage.path(로컬 파일시스템 절대경로)도 사람마다 값이
+         달라야 해서 여기 둔다. app.properties는 모두가 같은 값을 써도 되는 설정만 담아 git에 커밋한다.
+
+         <context:property-placeholder>의 짧은 표기 대신 PropertySourcesPlaceholderConfigurer를
+         직접 선언하는 이유: 짧은 표기는 파일 인코딩을 지정할 방법이 없어 java.util.Properties의
+         기본 동작(ISO-8859-1)으로 읽는다. attachment.storage.path에 한글이 섞인 절대경로를 넣었더니
+         실제로 깨진 이름의 폴더가 만들어지는 문제를 재현해서 발견했다(2026-09-14) - fileEncoding을
+         UTF-8로 명시해서 근본 원인을 없앤다. -->
+    <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:db.properties</value>
+                <value>classpath:app.properties</value>
+            </list>
+        </property>
+        <property name="fileEncoding" value="UTF-8" />
+    </bean>
 
     <!-- DataSource -->
     <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">

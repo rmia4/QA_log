@@ -6,3 +6,13 @@ jdbc.driver=org.postgresql.Driver
 jdbc.url=jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres?sslmode=require
 jdbc.username=postgres
 jdbc.password=
+
+# 첨부파일이 실제로 저장되는 로컬 경로 - 반드시 절대경로로 적으세요. 상대경로(예: ./uploads)를 쓰면
+# mvn tomcat7:run을 실행하는 폴더가 매번 다를 때마다 저장 위치가 달라져서, 예전에 올린 첨부파일을
+# 못 찾는 문제가 생깁니다(2026-09-14 실사용 중 발견).
+#
+# 참고: 이 프로젝트는 root-context.xml에서 PropertySourcesPlaceholderConfigurer의 fileEncoding을
+# UTF-8로 명시해뒀기 때문에 경로에 한글이 들어가도 안전합니다(처음엔 이 설정이 없어서 한글 경로가
+# 깨진 이름의 폴더로 만들어지는 문제가 실제로 있었음, 2026-09-14). 그래도 굳이 필요하지 않다면
+# 영문/숫자로만 된 경로를 쓰는 걸 권장합니다(단순함).
+attachment.storage.path=C:/Users/본인계정/qalog-uploads

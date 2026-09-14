@@ -19,6 +19,11 @@ NCI IPP 자율학습 프로젝트 (실무 프로젝트 아님).
    프로젝트의 Settings → Database → Connection string(JDBC/URI)에서 host를 그대로 복사하고,
    비밀번호는 팀에서 공유받은 값을 채운다. (`db.properties`는 `.gitignore` 대상이라 git에는 올라가지
    않는다 — 다 같은 DB에 붙는 것이므로 로컬 사본이 아니라 실제 공유 데이터를 보게 된다.)
+   같은 파일에 `attachment.storage.path`도 **절대경로**로 반드시 채운다(예:
+   `C:/Users/본인계정/qalog-uploads`) — 상대경로를 쓰면 `mvn tomcat7:run`을 실행하는 폴더가
+   바뀔 때마다 첨부파일 저장 위치가 달라져 예전 첨부를 못 찾는 문제가 생긴다. (참고: 경로에 한글이
+   섞여도 되도록 `root-context.xml`에서 설정 파일 인코딩을 UTF-8로 명시해뒀다 - 처음엔 이게 없어서
+   한글 경로가 깨진 이름의 폴더로 만들어지는 문제가 있었음, 2026-09-14 수정.)
 3. 별도 Tomcat 설치 없이 바로 띄우려면:
    ```
    mvn tomcat7:run
