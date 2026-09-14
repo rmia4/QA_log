@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import egovframework.common.SessionKeys;
 import egovframework.issue.service.IssueListService;
 import egovframework.project.service.ProjectService;
+import egovframework.project.gubun.ProjectStatus;
 import egovframework.project.vo.ProjectVO;
 
 @Controller
@@ -36,6 +37,8 @@ public class MainController {
 
         List<ProjectVO> projects = projectService.getProjectList();
         model.addAttribute("projects", projects);
+        model.addAttribute("projectListStatuses", java.util.Arrays.asList(ProjectStatus.values()));
+        model.addAttribute("projectStatusOptions", ProjectStatus.activeValues());
         String listMode = "closed".equals(view) ? "closed" : "active";
         String sortMode = "createdAt".equals(sort) ? "createdAt" : "severity";
         String sortDirection = "asc".equals(direction) ? "asc" : "desc";

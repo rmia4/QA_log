@@ -22,6 +22,7 @@ import egovframework.common.SessionKeys;
 import egovframework.issue.dto.IssueListItemDTO;
 import egovframework.issue.service.IssueListService;
 import egovframework.main.controller.MainController;
+import egovframework.project.gubun.ProjectStatus;
 import egovframework.project.service.ProjectService;
 import egovframework.project.vo.ProjectVO;
 
@@ -112,6 +113,23 @@ public class MainControllerTest {
                 .andExpect(model().attribute("direction", "asc"));
     }
 
+    @Test
+    public void projectFormsOnlyReceiveActiveStatusOptions() throws Exception {
+        mockMvc.perform(get("/").session(loggedInSession()))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("projectStatusOptions", asList(
+                        ProjectStatus.IN_PROGRESS, ProjectStatus.MAINTENANCE, ProjectStatus.ON_HOLD)));
+    }
+
+    @Test
+    public void projectListReceivesAllStatusesInDisplayOrder() throws Exception {
+        mockMvc.perform(get("/").session(loggedInSession()))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("projectListStatuses", asList(
+                        ProjectStatus.IN_PROGRESS, ProjectStatus.MAINTENANCE,
+                        ProjectStatus.ON_HOLD, ProjectStatus.ARCHIVED)));
+    }
+
     private MockHttpSession loggedInSession() {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute(SessionKeys.LOGIN_USER_ID, 7L);
@@ -139,17 +157,17 @@ public class MainControllerTest {
         }
 
         @Override
-        public ProjectVO createProject(String name, Long createdBy) {
+        public ProjectVO createProject(String name, String status, Long createdBy) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void updateProject(Long id, String name) {
+        public void updateProject(Long id, String name, String status) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean deleteProject(Long id) {
+        public boolean archiveProject(Long id) {
             throw new UnsupportedOperationException();
         }
     }

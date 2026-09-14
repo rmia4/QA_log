@@ -14,9 +14,8 @@ public interface ProjectMapper {
 
     void insertProject(ProjectVO project);
 
-    void updateProject(@Param("id") Long id, @Param("name") String name);
+    void updateProject(@Param("id") Long id, @Param("name") String name,
+            @Param("status") String status);
 
-    int countIssuesByProjectId(@Param("projectId") Long projectId);
-
-    void deleteProject(@Param("id") Long id);
+    int archiveProject(@Param("id") Long id);
 }

@@ -2,6 +2,7 @@ package egovframework.issue.dto;
 
 import java.time.LocalDateTime;
 
+import egovframework.common.KoreanDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,4 +20,8 @@ public class IssueListItemDTO {
     private String assigneeName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public String getCreatedAtDisplay() {
+        return KoreanDateTime.format(createdAt);
+    }
 }

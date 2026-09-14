@@ -29,32 +29,33 @@ public class ProjectController {
     }
 
     @PostMapping("/projects")
-    public String create(@RequestParam("name") String name, HttpSession session) {
+    public String create(@RequestParam("name") String name,
+            @RequestParam(value = "status", required = false) String status, HttpSession session) {
         Long userId = loginUserId(session);
         if (userId == null) {
             return "redirect:/login";
         }
-        ProjectVO project = projectService.createProject(name, userId);
+        ProjectVO project = projectService.createProject(name, status, userId);
         return "redirect:/?projectId=" + project.getId();
     }
 
     @PostMapping("/projects/{id}/edit")
     public String update(@PathVariable("id") Long id, @RequestParam("name") String name,
-            HttpSession session) {
+            @RequestParam(value = "status", required = false) String status, HttpSession session) {
         if (loginUserId(session) == null) {
             return "redirect:/login";
         }
-        projectService.updateProject(id, name);
+        projectService.updateProject(id, name, status);
         return "redirect:/?projectId=" + id;
     }
 
-    @PostMapping("/projects/{id}/delete")
-    public String delete(@PathVariable("id") Long id, HttpSession session) {
+    @PostMapping("/projects/{id}/archive")
+    public String archive(@PathVariable("id") Long id, HttpSession session) {
         if (loginUserId(session) == null) {
             return "redirect:/login";
         }
-        if (!projectService.deleteProject(id)) {
-            return "redirect:/?projectId=" + id + "&projectDeleteError=hasIssues";
+        if (!projectService.archiveProject(id)) {
+            return "redirect:/?projectId=" + id + "&projectArchiveError=hasOpenIssues";
         }
         return "redirect:/";
     }
