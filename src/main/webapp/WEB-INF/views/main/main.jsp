@@ -16,6 +16,11 @@
             <span>QA로그</span>
         </a>
         <div class="header-actions">
+            <label class="search-box project-search-box">
+                <span class="search-icon" aria-hidden="true">⌕</span>
+                <input id="projectSearchInput" class="search-input" type="search"
+                       placeholder="프로젝트 검색" autocomplete="off" aria-label="프로젝트 검색">
+            </label>
             <button type="button" class="action-button action-button-primary"
                     onclick="document.getElementById('createProjectDialog').showModal()">
                 <span aria-hidden="true">＋</span> 프로젝트 생성
@@ -60,7 +65,8 @@
                                         <c:param name="direction" value="${direction}" />
                                     </c:url>
                                     <a class="project-item ${project.id == selectedProjectId ? 'is-selected' : ''}"
-                                       href="${projectUrl}" ${project.id == selectedProjectId ? 'aria-current="page"' : ''}>
+                                       href="${projectUrl}" data-project-name="${fn:escapeXml(project.name)}"
+                                       ${project.id == selectedProjectId ? 'aria-current="page"' : ''}>
                                         <span class="project-icon" aria-hidden="true"><c:out value="${fn:substring(project.name, 0, 1)}" /></span>
                                         <span class="project-copy">
                                             <strong><c:out value="${project.name}" /></strong>
@@ -74,6 +80,7 @@
                     </details>
                 </c:forEach>
             </nav>
+            <p id="projectSearchEmpty" class="project-search-empty" hidden>검색 결과가 없습니다.</p>
 
             <c:if test="${empty projects}">
                 <div class="project-empty">
@@ -133,6 +140,11 @@
                                aria-selected="${listMode == 'closed'}">종료됨</a>
                         </div>
                         <div class="issue-toolbar-meta">
+                            <label class="search-box issue-search-box">
+                                <span class="search-icon" aria-hidden="true">⌕</span>
+                                <input id="issueSearchInput" class="search-input" type="search"
+                                       placeholder="오류 검색" autocomplete="off" aria-label="오류 검색">
+                            </label>
                             <div class="sort-controls" aria-label="오류 목록 정렬">
                                 <c:url var="severitySortUrl" value="/">
                                     <c:param name="projectId" value="${selectedProjectId}" />
@@ -153,7 +165,7 @@
                                     추가 날짜 <span aria-hidden="true">${sort == 'createdAt' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
                                 </a>
                             </div>
-                            <span class="result-count">총 ${fn:length(issues)}건</span>
+                            <span id="issueResultCount" class="result-count">총 ${fn:length(issues)}건</span>
                         </div>
                     </div>
 
@@ -171,7 +183,7 @@
                             </thead>
                             <tbody>
                                 <c:forEach var="issue" items="${issues}">
-                                    <tr>
+                                    <tr class="issue-row" data-search-text="${fn:escapeXml(issue.searchText)}">
                                         <td class="issue-number">#${empty issue.issueNumber ? issue.id : issue.issueNumber}</td>
                                         <td class="issue-title">
                                             <a href="<c:url value='/issues/${issue.id}' />">
@@ -206,6 +218,10 @@
                                 </c:forEach>
                             </tbody>
                         </table>
+
+                        <div id="issueSearchEmpty" class="issue-search-empty" hidden>
+                            검색어와 일치하는 오류가 없습니다.
+                        </div>
 
                         <c:if test="${empty issues}">
                             <div class="issue-empty">
@@ -342,6 +358,55 @@
             window.requestAnimationFrame(function () {
                 ready = true;
             });
+
+            var projectSearchInput = document.getElementById('projectSearchInput');
+            var projectSearchEmpty = document.getElementById('projectSearchEmpty');
+            if (projectSearchInput) {
+                projectSearchInput.addEventListener('input', function () {
+                    var keyword = projectSearchInput.value.trim().toLowerCase();
+                    var visibleProjectCount = 0;
+
+                    Array.prototype.forEach.call(groups, function (group) {
+                        var visibleInGroup = 0;
+                        var projectItems = group.querySelectorAll('[data-project-name]');
+                        Array.prototype.forEach.call(projectItems, function (item) {
+                            var projectName = item.getAttribute('data-project-name').toLowerCase();
+                            var matches = projectName.indexOf(keyword) !== -1;
+                            item.hidden = !matches;
+                            if (matches) {
+                                visibleInGroup++;
+                                visibleProjectCount++;
+                            }
+                        });
+                        group.hidden = visibleInGroup === 0;
+                    });
+
+                    projectSearchEmpty.hidden = visibleProjectCount !== 0;
+                });
+            }
+
+            var issueSearchInput = document.getElementById('issueSearchInput');
+            var issueRows = document.querySelectorAll('.issue-row');
+            var issueResultCount = document.getElementById('issueResultCount');
+            var issueSearchEmpty = document.getElementById('issueSearchEmpty');
+            if (issueSearchInput) {
+                issueSearchInput.addEventListener('input', function () {
+                    var keyword = issueSearchInput.value.trim().toLowerCase();
+                    var visibleIssueCount = 0;
+
+                    Array.prototype.forEach.call(issueRows, function (row) {
+                        var searchText = row.getAttribute('data-search-text').toLowerCase();
+                        var matches = searchText.indexOf(keyword) !== -1;
+                        row.hidden = !matches;
+                        if (matches) {
+                            visibleIssueCount++;
+                        }
+                    });
+
+                    issueResultCount.textContent = '총 ' + visibleIssueCount + '건';
+                    issueSearchEmpty.hidden = keyword === '' || visibleIssueCount !== 0 || issueRows.length === 0;
+                });
+            }
         }());
     </script>
 </body>

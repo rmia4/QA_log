@@ -51,6 +51,29 @@ a { color: inherit; text-decoration: none; }
 }
 
 .header-actions { gap: 16px; }
+.search-box { position: relative; display: inline-flex; align-items: center; }
+.search-icon {
+    position: absolute;
+    left: 11px;
+    color: var(--ink-500);
+    font-size: 17px;
+    pointer-events: none;
+}
+.search-input {
+    width: 100%;
+    height: 38px;
+    padding: 0 12px 0 34px;
+    color: var(--ink-900);
+    background: #fff;
+    border: 1px solid #d7ddea;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 12px;
+    outline: none;
+}
+.search-input:focus { border-color: var(--blue-600); box-shadow: 0 0 0 3px rgba(36, 104, 232, .12); }
+.search-input::placeholder { color: #929bad; }
+.project-search-box { width: 230px; }
 .header-user { gap: 9px; color: var(--ink-700); font-size: 14px; font-weight: 650; }
 .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--blue-100); color: var(--blue-700); }
 .logout-form { margin: 0 0 0 5px; }
@@ -205,6 +228,7 @@ a { color: inherit; text-decoration: none; }
 .tab.is-active { color: var(--blue-700); background: #fff; box-shadow: 0 2px 7px rgba(23, 32, 51, .08); }
 .issue-toolbar-meta, .sort-controls { display: flex; align-items: center; }
 .issue-toolbar-meta { gap: 14px; }
+.issue-search-box { width: 210px; }
 .sort-controls { gap: 6px; }
 .sort-button {
     padding: 7px 10px;
@@ -249,7 +273,9 @@ a { color: inherit; text-decoration: none; }
 .project-empty { padding: 45px 12px; border: 1px dashed #d8deea; border-radius: 12px; font-size: 13px; }
 .project-empty span { font-size: 25px; }
 .project-empty p { margin: 8px 0 0; }
+.project-search-empty { margin: 16px 8px 0; color: var(--ink-500); font-size: 12px; text-align: center; }
 .issue-empty { padding: 72px 24px 78px; }
+.issue-search-empty { padding: 54px 24px; color: var(--ink-500); font-size: 13px; text-align: center; }
 .workspace-empty { min-height: 65vh; display: grid; place-content: center; justify-items: center; }
 .empty-icon { width: 48px; height: 48px; color: var(--blue-600); background: var(--blue-100); border-radius: 15px; font-weight: 900; }
 .issue-empty h3, .workspace-empty h2 { margin: 16px 0 7px; color: var(--ink-900); font-size: 17px; }
