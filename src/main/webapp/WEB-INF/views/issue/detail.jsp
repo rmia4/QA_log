@@ -113,6 +113,15 @@
   .log-text { font-size:13px; color:var(--ink-muted); }
   .log-text b { color:var(--ink); font-weight:600; }
   .log-time { font-family:"JetBrains Mono",monospace; font-size:11.5px; color:var(--ink-faint); white-space:nowrap; }
+  .log-toggle { font-family:inherit; font-size:12px; color:var(--accent); background:none; border:none; padding:0 0 0 6px; cursor:pointer; }
+  .log-toggle:hover { text-decoration:underline; }
+  .log-group-items { margin-top:8px; padding-left:14px; border-left:2px solid var(--border); display:flex; flex-direction:column; gap:6px; }
+  /* display:flex가 브라우저 기본 [hidden]{display:none} 규칙과 동일 명시도라 author 스타일이 이겨서
+     hidden 속성을 줘도 계속 보이던 문제 - 더 명시적인 선택자로 강제 숨김 */
+  .log-group-items[hidden] { display:none; }
+  .log-subitem { display:flex; justify-content:space-between; gap:10px; font-size:12.5px; color:var(--ink-muted); }
+  .log-subitem .log-text { color:var(--ink-muted); }
+  .log-subitem .log-text b { color:var(--ink); }
 
   .comment-list { display:flex; flex-direction:column; gap:12px; margin-bottom:16px; }
   .comment-card { display:flex; gap:10px; }
@@ -134,6 +143,9 @@
   <main class="detail">
     <c:if test="${conflict}">
       <div class="conflict-banner">다른 사용자가 먼저 수정했습니다. 아래 내용을 새로고침한 뒤 다시 시도하세요.</div>
+    </c:if>
+    <c:if test="${forbidden}">
+      <div class="conflict-banner">이 작업은 오류 등록자 또는 처리 담당자만 할 수 있습니다.</div>
     </c:if>
 
     <div class="crumb">${fn:escapeXml(issue.projectName)} <span class="sep">/</span> <span class="mono">#${issue.issueNumber}</span></div>
@@ -178,50 +190,78 @@
           <span class="k">등록자</span>
           <span class="v">${fn:escapeXml(issue.createdByName)} · <span class="mono">${issue.createdAtDisplay}</span></span>
         </div>
-        <form class="assignee-form" action="${ctx}/issues/${issue.id}/assignee" method="post">
-          <div class="meta-item">
-            <span class="k">현재 처리 담당자</span>
-            <select name="assigneeId">
-              <option value="">미지정</option>
-              <c:forEach var="u" items="${users}">
-                <option value="${u.id}" ${u.id == issue.assigneeId ? 'selected' : ''}>${fn:escapeXml(u.displayName)}</option>
-              </c:forEach>
-            </select>
-          </div>
-          <!-- expectedUpdatedAt은 낙관적 잠금 대조용 원본 정밀도 값 - 화면표시(createdAtDisplay 등)와
-               달리 절대 KoreanDateTime으로 가공하면 안 된다. -->
-          <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
-          <button type="submit" class="btn">변경</button>
-        </form>
+        <c:choose>
+          <c:when test="${canManage}">
+            <form class="assignee-form" action="${ctx}/issues/${issue.id}/assignee" method="post">
+              <div class="meta-item">
+                <span class="k">현재 처리 담당자</span>
+                <select name="assigneeId">
+                  <option value="">미지정</option>
+                  <c:forEach var="u" items="${users}">
+                    <option value="${u.id}" ${u.id == issue.assigneeId ? 'selected' : ''}>${fn:escapeXml(u.displayName)}</option>
+                  </c:forEach>
+                </select>
+              </div>
+              <!-- expectedUpdatedAt은 낙관적 잠금 대조용 원본 정밀도 값 - 화면표시(createdAtDisplay 등)와
+                   달리 절대 KoreanDateTime으로 가공하면 안 된다. -->
+              <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
+              <button type="submit" class="btn">변경</button>
+            </form>
+          </c:when>
+          <c:when test="${canClaimAssignee}">
+            <%-- 담당자 미지정 상태의 예외 - 등록자/담당자가 아니어도 자기 자신만 담당자로 지정 가능
+                 (등록자·담당자가 둘 다 자리를 비워 오류가 영원히 미지정으로 남는 것을 막기 위함) --%>
+            <form class="assignee-form" action="${ctx}/issues/${issue.id}/assignee" method="post">
+              <div class="meta-item">
+                <span class="k">현재 처리 담당자</span>
+                <select name="assigneeId">
+                  <option value="" selected>미지정</option>
+                  <option value="${sessionScope.LOGIN_USER_ID}">${fn:escapeXml(sessionScope.loginDisplayName)}(나)</option>
+                </select>
+              </div>
+              <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
+              <button type="submit" class="btn">내가 맡기</button>
+            </form>
+          </c:when>
+          <c:otherwise>
+            <div class="meta-item">
+              <span class="k">현재 처리 담당자</span>
+              <span class="v">${empty issue.assigneeName ? '미지정' : fn:escapeXml(issue.assigneeName)}</span>
+            </div>
+          </c:otherwise>
+        </c:choose>
         <div class="meta-item">
           <span class="k">최근 변경</span>
           <span class="v">${fn:escapeXml(issue.updatedByName)} · <span class="mono">${issue.updatedAtDisplay}</span></span>
         </div>
       </div>
-      <div class="meta-actions">
-        <%-- 아래 상태변경/종료/재오픈 폼의 expectedUpdatedAt도 위 담당자 폼과 동일하게 원본 정밀도 값을 그대로 써야 함 --%>
-        <c:if test="${issue.status != 'closed'}">
-          <form class="inline" action="${ctx}/issues/${issue.id}/status" method="post">
-            <select name="status">
-              <c:forEach var="opt" items="${statusOptions}">
-                <option value="${opt.code}" ${opt.code == issue.status ? 'selected' : ''}>${opt.label}</option>
-              </c:forEach>
-            </select>
-            <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
-            <button type="submit" class="btn">상태 변경</button>
-          </form>
-          <form class="inline" action="${ctx}/issues/${issue.id}/close" method="post">
-            <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
-            <button type="submit" class="btn btn-danger">종료</button>
-          </form>
-        </c:if>
-        <c:if test="${issue.status == 'closed'}">
-          <form class="inline" action="${ctx}/issues/${issue.id}/reopen" method="post">
-            <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
-            <button type="submit" class="btn btn-primary">다시 열기</button>
-          </form>
-        </c:if>
-      </div>
+      <c:if test="${canManage}">
+        <div class="meta-actions">
+          <%-- 아래 상태변경/종료/재오픈 폼의 expectedUpdatedAt도 위 담당자 폼과 동일하게 원본 정밀도 값을 그대로 써야 함 --%>
+          <c:if test="${issue.status != 'closed'}">
+            <form class="inline" action="${ctx}/issues/${issue.id}/status" method="post">
+              <select name="status">
+                <c:forEach var="opt" items="${statusOptions}">
+                  <option value="${opt.code}" ${opt.code == issue.status ? 'selected' : ''}>${opt.label}</option>
+                </c:forEach>
+              </select>
+              <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
+              <button type="submit" class="btn">상태 변경</button>
+            </form>
+            <form class="inline" action="${ctx}/issues/${issue.id}/close" method="post">
+              <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
+              <button type="submit" class="btn btn-danger">종료</button>
+            </form>
+          </c:if>
+          <c:if test="${issue.status == 'closed'}">
+            <form class="inline" action="${ctx}/issues/${issue.id}/reopen" method="post">
+              <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
+              <button type="submit" class="btn btn-primary">다시 열기</button>
+            </form>
+          </c:if>
+          <a class="btn" href="${ctx}/issues/${issue.id}/edit">수정</a>
+        </div>
+      </c:if>
     </div>
 
     <section class="panel">
@@ -326,21 +366,56 @@
 
       <div class="tab-panel" id="panelHistory" hidden>
         <div class="log-list">
-          <c:forEach var="h" items="${histories}">
-            <div class="log-row">
-              <span class="log-dot"></span>
-              <span class="log-text">
-                <c:choose>
-                  <c:when test="${h.eventType == 'created'}"><b>${fn:escapeXml(h.actorName)}</b>님이 오류를 등록했습니다</c:when>
-                  <c:when test="${h.eventType == 'attachment_added'}"><b>${fn:escapeXml(h.actorName)}</b>님이 스크린샷을 첨부했습니다</c:when>
-                  <c:when test="${h.eventType == 'field_changed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 ${fn:escapeXml(h.fieldLabel)}${h.fieldJosaEul} ${fn:escapeXml(h.oldValueDisplay)} → ${fn:escapeXml(h.newValueDisplay)}${h.newValueJosaRo} 변경</c:when>
-                  <c:otherwise>${fn:escapeXml(h.eventType)}</c:otherwise>
-                </c:choose>
-              </span>
-              <span class="log-time mono">${h.createdAtDisplay}</span>
-            </div>
+          <c:forEach var="g" items="${historyGroups}">
+            <c:choose>
+              <%-- 한 번의 저장 요청으로 항목이 하나뿐이면 지금까지처럼 그 문장을 그대로 보여준다. --%>
+              <c:when test="${g.count == 1}">
+                <c:set var="h" value="${g.single}" />
+                <div class="log-row">
+                  <span class="log-dot"></span>
+                  <span class="log-text">
+                    <c:choose>
+                      <c:when test="${h.eventType == 'created'}"><b>${fn:escapeXml(h.actorName)}</b>님이 오류를 등록했습니다</c:when>
+                      <c:when test="${h.eventType == 'attachment_added'}"><b>${fn:escapeXml(h.actorName)}</b>님이 스크린샷을 첨부했습니다</c:when>
+                      <c:when test="${h.eventType == 'attachment_removed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 첨부파일을 삭제했습니다</c:when>
+                      <c:when test="${h.eventType == 'field_changed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 ${fn:escapeXml(h.fieldLabel)}${h.fieldJosaEul} ${fn:escapeXml(h.oldValueDisplay)} → ${fn:escapeXml(h.newValueDisplay)}${h.newValueJosaRo} 변경</c:when>
+                      <c:otherwise>${fn:escapeXml(h.eventType)}</c:otherwise>
+                    </c:choose>
+                  </span>
+                  <span class="log-time mono">${h.createdAtDisplay}</span>
+                </div>
+              </c:when>
+              <%-- 항목이 여러 개면 "변경 N건" 요약 한 줄 + 기본 접힌 펼치기 목록으로 묶는다
+                   (등록/수정 시 필드 여러 개 + 첨부 추가/삭제가 한꺼번에 남는 걸 깔끔하게 보여주기 위함,
+                   2026-09-14 팀 결정). 세부 항목의 문구 조립 규칙은 위 단일 항목 분기와 동일하다. --%>
+              <c:otherwise>
+                <div class="log-row">
+                  <span class="log-dot"></span>
+                  <span class="log-text">
+                    <b>${fn:escapeXml(g.actorName)}</b>님이 오류를 수정했습니다
+                    <button type="button" class="log-toggle" data-label="변경 ${g.count}건 보기" onclick="toggleLogGroup(this)">변경 ${g.count}건 보기</button>
+                    <div class="log-group-items" hidden>
+                      <c:forEach var="h" items="${g.items}">
+                        <div class="log-subitem">
+                          <span class="log-text">
+                            <c:choose>
+                              <c:when test="${h.eventType == 'attachment_added'}"><b>${fn:escapeXml(h.actorName)}</b>님이 스크린샷을 첨부했습니다</c:when>
+                              <c:when test="${h.eventType == 'attachment_removed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 첨부파일을 삭제했습니다</c:when>
+                              <c:when test="${h.eventType == 'field_changed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 ${fn:escapeXml(h.fieldLabel)}${h.fieldJosaEul} ${fn:escapeXml(h.oldValueDisplay)} → ${fn:escapeXml(h.newValueDisplay)}${h.newValueJosaRo} 변경</c:when>
+                              <c:otherwise>${fn:escapeXml(h.eventType)}</c:otherwise>
+                            </c:choose>
+                          </span>
+                          <span class="log-time mono">${h.createdAtDisplay}</span>
+                        </div>
+                      </c:forEach>
+                    </div>
+                  </span>
+                  <span class="log-time mono">${g.createdAtDisplay}</span>
+                </div>
+              </c:otherwise>
+            </c:choose>
           </c:forEach>
-          <c:if test="${empty histories}"><p class="empty">아직 이력이 없습니다.</p></c:if>
+          <c:if test="${empty historyGroups}"><p class="empty">아직 이력이 없습니다.</p></c:if>
         </div>
       </div>
 
@@ -375,6 +450,14 @@
       document.getElementById('panelComments').hidden = isHistory;
       document.getElementById('tabBtnHistory').classList.toggle('active', isHistory);
       document.getElementById('tabBtnComments').classList.toggle('active', !isHistory);
+    }
+
+    /** 변경 이력에서 "변경 N건 보기" 클릭 시 세부 항목을 펼치고/접는다(기본은 접힌 상태). */
+    function toggleLogGroup(button) {
+      var items = button.nextElementSibling;
+      var willShow = items.hidden;
+      items.hidden = !willShow;
+      button.textContent = willShow ? '접기' : button.dataset.label;
     }
   </script>
 </body>

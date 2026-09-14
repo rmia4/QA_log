@@ -10,6 +10,7 @@ public enum IssueEventType {
     CREATED("created"),
     FIELD_CHANGED("field_changed"),
     ATTACHMENT_ADDED("attachment_added"),
+    ATTACHMENT_REMOVED("attachment_removed"),
     COMMENT_ADDED("comment_added");
 
     private final String code;

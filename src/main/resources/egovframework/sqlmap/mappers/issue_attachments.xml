@@ -32,4 +32,8 @@
         WHERE id = #{id}
     </select>
 
+    <delete id="deleteAttachment" parameterType="long">
+        DELETE FROM issue_attachments WHERE id = #{id}
+    </delete>
+
 </mapper>
