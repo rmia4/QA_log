@@ -2,6 +2,7 @@ package egovframework.issue.dto;
 
 import java.time.LocalDateTime;
 
+import egovframework.common.KoreanDateTime;
 import egovframework.common.KoreanJosa;
 import egovframework.issue.gubun.IssueHistoryFieldLabels;
 import lombok.Getter;
@@ -49,5 +50,9 @@ public class IssueHistoryResponseDTO {
     /** "{newValueDisplay}{로|으로}" 조합용 조사 */
     public String getNewValueJosaRo() {
         return KoreanJosa.roEuro(getNewValueDisplay());
+    }
+
+    public String getCreatedAtDisplay() {
+        return KoreanDateTime.format(createdAt);
     }
 }

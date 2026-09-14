@@ -3,7 +3,6 @@ package egovframework.issue.controller;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
@@ -11,7 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +21,7 @@ import egovframework.common.SessionKeys;
 import egovframework.issue.exception.IssueConflictException;
 import egovframework.issue.gubun.IssueStatus;
 import egovframework.issue.mapper.IssueAttachmentMapper;
+import egovframework.issue.service.AttachmentStorageService;
 import egovframework.issue.service.IssueCommentService;
 import egovframework.issue.service.IssueService;
 import egovframework.issue.vo.IssueAttachmentVO;
@@ -45,9 +44,8 @@ public class IssueViewController {
     private UserMapper userMapper;
     @Autowired
     private IssueAttachmentMapper issueAttachmentMapper;
-
-    @Value("${attachment.storage.path}")
-    private String storagePath;
+    @Autowired
+    private AttachmentStorageService attachmentStorageService;
 
     @RequestMapping(method = RequestMethod.GET)
     public String detail(@PathVariable Long id, @RequestParam(required = false) String conflict, Model model) {
@@ -115,7 +113,7 @@ public class IssueViewController {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
-        Path filePath = Paths.get(storagePath, String.valueOf(id), attachment.getStorageKey());
+        Path filePath = attachmentStorageService.resolve(id, attachment.getStorageKey());
         response.setContentType(attachment.getMimeType());
         response.setHeader("Content-Disposition", "inline");
         Files.copy(filePath, response.getOutputStream());

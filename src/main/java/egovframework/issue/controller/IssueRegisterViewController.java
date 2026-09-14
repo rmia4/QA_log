@@ -62,6 +62,8 @@ public class IssueRegisterViewController {
             IssueSaveRequestDTO request,
             @RequestParam(value = "registrationToken", required = false) String registrationToken,
             @RequestParam(value = "files", required = false) List<MultipartFile> files,
+            @RequestParam(value = "expectedResultFiles", required = false) List<MultipartFile> expectedResultFiles,
+            @RequestParam(value = "actualResultFiles", required = false) List<MultipartFile> actualResultFiles,
             HttpSession session) throws IOException {
         Long actorId = (Long) session.getAttribute(SessionKeys.LOGIN_USER_ID);
         if (actorId == null) {
@@ -73,7 +75,7 @@ public class IssueRegisterViewController {
 
         boolean created = false;
         try {
-            Long issueId = issueService.createIssue(projectId, request, files, actorId);
+            Long issueId = issueService.createIssue(projectId, request, files, expectedResultFiles, actualResultFiles, actorId);
             created = true;
             return "redirect:/issues/" + issueId;
         } finally {

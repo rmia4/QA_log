@@ -10,7 +10,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>#${issue.issueNumber} ${empty issue.title ? '제목 없음' : issue.title} · QA로그</title>
+<title>#${issue.issueNumber} ${empty issue.title ? '제목 없음' : fn:escapeXml(issue.title)} · QA로그</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <style>
   :root {
@@ -96,6 +96,8 @@
   .thumb-cap { padding:7px 9px; }
   .thumb-cap .name { font-size:11.5px; color:var(--ink); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .thumb-cap .size { font-size:10.5px; color:var(--ink-faint); font-family:"JetBrains Mono",monospace; }
+  .thumb-inline { width:220px; margin-top:8px; }
+  .thumb-inline img { height:130px; }
 
   .tabs-nav { display:flex; gap:4px; padding:14px 20px 0; }
   .tab-btn { font-family:inherit; font-size:13px; font-weight:600; padding:9px 14px; background:none; border:none; border-bottom:2px solid transparent; color:var(--ink-faint); cursor:pointer; }
@@ -134,7 +136,7 @@
       <div class="conflict-banner">다른 사용자가 먼저 수정했습니다. 아래 내용을 새로고침한 뒤 다시 시도하세요.</div>
     </c:if>
 
-    <div class="crumb">${issue.projectName} <span class="sep">/</span> <span class="mono">#${issue.issueNumber}</span></div>
+    <div class="crumb">${fn:escapeXml(issue.projectName)} <span class="sep">/</span> <span class="mono">#${issue.issueNumber}</span></div>
 
     <div class="badge-row">
       <div class="badge-group">
@@ -168,13 +170,13 @@
       </div>
     </div>
 
-    <h1 class="title">${empty issue.title ? '제목 없음' : issue.title}</h1>
+    <h1 class="title">${empty issue.title ? '제목 없음' : fn:escapeXml(issue.title)}</h1>
 
     <div class="meta-bar">
       <div class="meta-facts">
         <div class="meta-item">
           <span class="k">등록자</span>
-          <span class="v">${issue.createdByName} · <span class="mono">${issue.createdAt}</span></span>
+          <span class="v">${fn:escapeXml(issue.createdByName)} · <span class="mono">${issue.createdAtDisplay}</span></span>
         </div>
         <form class="assignee-form" action="${ctx}/issues/${issue.id}/assignee" method="post">
           <div class="meta-item">
@@ -182,19 +184,22 @@
             <select name="assigneeId">
               <option value="">미지정</option>
               <c:forEach var="u" items="${users}">
-                <option value="${u.id}" ${u.id == issue.assigneeId ? 'selected' : ''}>${u.displayName}</option>
+                <option value="${u.id}" ${u.id == issue.assigneeId ? 'selected' : ''}>${fn:escapeXml(u.displayName)}</option>
               </c:forEach>
             </select>
           </div>
+          <!-- expectedUpdatedAt은 낙관적 잠금 대조용 원본 정밀도 값 - 화면표시(createdAtDisplay 등)와
+               달리 절대 KoreanDateTime으로 가공하면 안 된다. -->
           <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
           <button type="submit" class="btn">변경</button>
         </form>
         <div class="meta-item">
           <span class="k">최근 변경</span>
-          <span class="v">${issue.updatedByName} · <span class="mono">${issue.updatedAt}</span></span>
+          <span class="v">${fn:escapeXml(issue.updatedByName)} · <span class="mono">${issue.updatedAtDisplay}</span></span>
         </div>
       </div>
       <div class="meta-actions">
+        <%-- 아래 상태변경/종료/재오픈 폼의 expectedUpdatedAt도 위 담당자 폼과 동일하게 원본 정밀도 값을 그대로 써야 함 --%>
         <c:if test="${issue.status != 'closed'}">
           <form class="inline" action="${ctx}/issues/${issue.id}/status" method="post">
             <select name="status">
@@ -224,13 +229,19 @@
       <div class="field-list">
         <div class="field-row">
           <div class="k">발생 위치</div>
-          <div class="v ${empty issue.location ? 'empty' : ''}">${empty issue.location ? '—' : issue.location}</div>
+          <div class="v ${empty issue.location ? 'empty' : ''}">${empty issue.location ? '—' : fn:escapeXml(issue.location)}</div>
         </div>
         <div class="field-row">
           <div class="k">URL 주소</div>
           <div class="v">
             <c:choose>
-              <c:when test="${not empty issue.locationUrl}"><a class="mono" href="${issue.locationUrl}" target="_blank" rel="noopener">${issue.locationUrl}</a></c:when>
+              <c:when test="${fn:startsWith(issue.locationUrl, 'http://') or fn:startsWith(issue.locationUrl, 'https://')}">
+                <a class="mono" href="${fn:escapeXml(issue.locationUrl)}" target="_blank" rel="noopener noreferrer">${fn:escapeXml(issue.locationUrl)}</a>
+              </c:when>
+              <c:when test="${not empty issue.locationUrl}">
+                <%-- http(s)로 시작하지 않으면 활성 링크로 만들지 않고 일반 텍스트로만 표시(오류등록_기능명세서.md 3절) --%>
+                <span class="mono">${fn:escapeXml(issue.locationUrl)}</span>
+              </c:when>
               <c:otherwise><span class="empty">—</span></c:otherwise>
             </c:choose>
           </div>
@@ -242,7 +253,7 @@
               <c:when test="${not empty issue.stepsToReproduce}">
                 <ol>
                   <c:forEach var="step" items="${fn:split(issue.stepsToReproduce, NEWLINE_CHARS)}">
-                    <c:if test="${not empty fn:trim(step)}"><li>${step}</li></c:if>
+                    <c:if test="${not empty fn:trim(step)}"><li>${fn:escapeXml(step)}</li></c:if>
                   </c:forEach>
                 </ol>
               </c:when>
@@ -252,35 +263,56 @@
         </div>
         <div class="field-row">
           <div class="k">기대 결과</div>
-          <div class="v ${empty issue.expectedResult ? 'empty' : ''}">${empty issue.expectedResult ? '—' : issue.expectedResult}</div>
+          <div class="v ${empty issue.expectedResult ? 'empty' : ''}">${empty issue.expectedResult ? '—' : fn:escapeXml(issue.expectedResult)}</div>
         </div>
+        <c:forEach var="a" items="${issue.attachments}">
+          <c:if test="${a.context == 'expected_result'}">
+            <div class="field-row">
+              <div class="k"></div>
+              <div class="v"><a class="thumb thumb-inline" href="${ctx}/issues/${issue.id}/attachments/${a.id}" target="_blank"><img src="${ctx}/issues/${issue.id}/attachments/${a.id}" alt="${fn:escapeXml(a.originalName)}"></a></div>
+            </div>
+          </c:if>
+        </c:forEach>
         <div class="field-row">
           <div class="k">실제 결과</div>
-          <div class="v ${empty issue.actualResult ? 'empty' : ''}">${empty issue.actualResult ? '—' : issue.actualResult}</div>
+          <div class="v ${empty issue.actualResult ? 'empty' : ''}">${empty issue.actualResult ? '—' : fn:escapeXml(issue.actualResult)}</div>
         </div>
+        <c:forEach var="a" items="${issue.attachments}">
+          <c:if test="${a.context == 'actual_result'}">
+            <div class="field-row">
+              <div class="k"></div>
+              <div class="v"><a class="thumb thumb-inline" href="${ctx}/issues/${issue.id}/attachments/${a.id}" target="_blank"><img src="${ctx}/issues/${issue.id}/attachments/${a.id}" alt="${fn:escapeXml(a.originalName)}"></a></div>
+            </div>
+          </c:if>
+        </c:forEach>
         <div class="field-row">
           <div class="k">테스트 버전</div>
-          <div class="v mono ${empty issue.testVersion ? 'empty' : ''}">${empty issue.testVersion ? '—' : issue.testVersion}</div>
+          <div class="v mono ${empty issue.testVersion ? 'empty' : ''}">${empty issue.testVersion ? '—' : fn:escapeXml(issue.testVersion)}</div>
         </div>
         <div class="field-row">
           <div class="k">테스트 환경</div>
-          <div class="v ${empty issue.testEnvironment ? 'empty' : ''}">${empty issue.testEnvironment ? '—' : issue.testEnvironment}</div>
+          <div class="v ${empty issue.testEnvironment ? 'empty' : ''}">${empty issue.testEnvironment ? '—' : fn:escapeXml(issue.testEnvironment)}</div>
         </div>
         <div class="field-row suggested">
           <div class="k">개선 방향</div>
-          <div class="v ${empty issue.suggestedFix ? 'empty' : ''}">${empty issue.suggestedFix ? '—' : issue.suggestedFix}</div>
+          <div class="v ${empty issue.suggestedFix ? 'empty' : ''}">${empty issue.suggestedFix ? '—' : fn:escapeXml(issue.suggestedFix)}</div>
         </div>
       </div>
-      <c:if test="${not empty issue.attachments}">
+      <%-- context가 없는(일반) 첨부만 여기 그리드에 표시 - 기대/실제 결과 전용 첨부는 위에서 각 필드 바로 아래 표시됨 --%>
+      <c:set var="hasGeneralAttachment" value="false" />
+      <c:forEach var="a" items="${issue.attachments}"><c:if test="${empty a.context}"><c:set var="hasGeneralAttachment" value="true" /></c:if></c:forEach>
+      <c:if test="${hasGeneralAttachment}">
         <div class="attachments">
           <c:forEach var="a" items="${issue.attachments}">
-            <a class="thumb" href="${ctx}/issues/${issue.id}/attachments/${a.id}" target="_blank">
-              <img src="${ctx}/issues/${issue.id}/attachments/${a.id}" alt="${a.originalName}">
-              <div class="thumb-cap">
-                <div class="name">${a.originalName}</div>
-                <div class="size"><fmt:formatNumber value="${a.sizeBytes / 1024}" maxFractionDigits="0"/> KB</div>
-              </div>
-            </a>
+            <c:if test="${empty a.context}">
+              <a class="thumb" href="${ctx}/issues/${issue.id}/attachments/${a.id}" target="_blank">
+                <img src="${ctx}/issues/${issue.id}/attachments/${a.id}" alt="${fn:escapeXml(a.originalName)}">
+                <div class="thumb-cap">
+                  <div class="name">${fn:escapeXml(a.originalName)}</div>
+                  <div class="size"><fmt:formatNumber value="${a.sizeBytes / 1024}" maxFractionDigits="0"/> KB</div>
+                </div>
+              </a>
+            </c:if>
           </c:forEach>
         </div>
       </c:if>
@@ -299,13 +331,13 @@
               <span class="log-dot"></span>
               <span class="log-text">
                 <c:choose>
-                  <c:when test="${h.eventType == 'created'}"><b>${h.actorName}</b>님이 오류를 등록했습니다</c:when>
-                  <c:when test="${h.eventType == 'attachment_added'}"><b>${h.actorName}</b>님이 스크린샷을 첨부했습니다</c:when>
-                  <c:when test="${h.eventType == 'field_changed'}"><b>${h.actorName}</b>님이 ${h.fieldLabel}${h.fieldJosaEul} ${h.oldValueDisplay} → ${h.newValueDisplay}${h.newValueJosaRo} 변경</c:when>
-                  <c:otherwise>${h.eventType}</c:otherwise>
+                  <c:when test="${h.eventType == 'created'}"><b>${fn:escapeXml(h.actorName)}</b>님이 오류를 등록했습니다</c:when>
+                  <c:when test="${h.eventType == 'attachment_added'}"><b>${fn:escapeXml(h.actorName)}</b>님이 스크린샷을 첨부했습니다</c:when>
+                  <c:when test="${h.eventType == 'field_changed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 ${fn:escapeXml(h.fieldLabel)}${h.fieldJosaEul} ${fn:escapeXml(h.oldValueDisplay)} → ${fn:escapeXml(h.newValueDisplay)}${h.newValueJosaRo} 변경</c:when>
+                  <c:otherwise>${fn:escapeXml(h.eventType)}</c:otherwise>
                 </c:choose>
               </span>
-              <span class="log-time mono">${h.createdAt}</span>
+              <span class="log-time mono">${h.createdAtDisplay}</span>
             </div>
           </c:forEach>
           <c:if test="${empty histories}"><p class="empty">아직 이력이 없습니다.</p></c:if>
@@ -316,13 +348,13 @@
         <div class="comment-list">
           <c:forEach var="cm" items="${comments}">
             <div class="comment-card">
-              <span class="avatar">${fn:substring(cm.authorName, 0, 2)}</span>
+              <span class="avatar">${fn:escapeXml(fn:substring(cm.authorName, 0, 2))}</span>
               <div>
                 <div class="comment-head">
-                  <span class="comment-author">${cm.authorName}</span>
-                  <span class="comment-time mono">${cm.createdAt}</span>
+                  <span class="comment-author">${fn:escapeXml(cm.authorName)}</span>
+                  <span class="comment-time mono">${cm.createdAtDisplay}</span>
                 </div>
-                <div class="comment-text">${cm.content}</div>
+                <div class="comment-text">${fn:escapeXml(cm.content)}</div>
               </div>
             </div>
           </c:forEach>

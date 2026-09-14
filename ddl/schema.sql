@@ -75,7 +75,10 @@ CREATE TABLE issue_attachments (
     mime_type     VARCHAR(100)    NOT NULL,
     size_bytes    BIGINT          NOT NULL,
     uploaded_by   BIGINT          NOT NULL REFERENCES users (id),
-    created_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- NULL=오류 본문 전체에 딸린 일반 첨부, 'expected_result'/'actual_result'=해당 필드 전용 첨부
+    -- (2026-09-11 실사용 피드백으로 추가 - 기대결과/실제결과 입력란에도 이미지 첨부 가능하게)
+    context       VARCHAR(20)     NULL
 );
 
 CREATE INDEX idx_issue_attachments_issue_created ON issue_attachments (issue_id, created_at);

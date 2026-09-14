@@ -129,7 +129,8 @@ public class IssueRegisterViewControllerTest {
 
         @Override
         public Long createIssue(Long projectId, IssueSaveRequestDTO request,
-                List<MultipartFile> files, Long actorId) {
+                List<MultipartFile> files, List<MultipartFile> expectedResultFiles,
+                List<MultipartFile> actualResultFiles, Long actorId) {
             createCount++;
             return 301L;
         }
