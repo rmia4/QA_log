@@ -88,7 +88,10 @@ CREATE TABLE issue_attachments (
     created_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     -- NULL=오류 본문 전체에 딸린 일반 첨부, 'expected_result'/'actual_result'=해당 필드 전용 첨부
     -- (2026-09-11 실사용 피드백으로 추가 - 기대결과/실제결과 입력란에도 이미지 첨부 가능하게)
-    context       VARCHAR(20)     NULL
+    context       VARCHAR(20)     NULL,
+    -- NULL=오류 본문에 딸린 첨부, NOT NULL=해당 댓글 전용 첨부(2026-09-14 추가 - 댓글에 스크린샷 첨부 가능하게)
+    -- issue_comments가 이 테이블보다 뒤에 정의되므로 FK는 아래에서 issue_comments 정의 후 ALTER TABLE로 추가
+    comment_id    BIGINT          NULL
 );
 
 CREATE INDEX idx_issue_attachments_issue_created ON issue_attachments (issue_id, created_at);
@@ -102,6 +105,10 @@ CREATE TABLE issue_comments (
 );
 
 CREATE INDEX idx_issue_comments_issue_created ON issue_comments (issue_id, created_at);
+
+ALTER TABLE issue_attachments ADD CONSTRAINT fk_issue_attachments_comment
+    FOREIGN KEY (comment_id) REFERENCES issue_comments (id);
+CREATE INDEX idx_issue_attachments_comment ON issue_attachments (comment_id);
 
 CREATE TABLE issue_histories (
     id                 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

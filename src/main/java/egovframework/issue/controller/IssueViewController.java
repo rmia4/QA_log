@@ -131,15 +131,21 @@ public class IssueViewController {
     }
 
     @RequestMapping(value = "/comments", method = RequestMethod.POST)
-    public String addComment(@PathVariable Long id, @RequestParam String content, HttpSession session) {
+    public String addComment(@PathVariable Long id, @RequestParam String content,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files,
+            HttpSession session) throws IOException {
         if (currentUserId(session) == null) {
             return "redirect:/login";
         }
+<<<<<<< HEAD
         try {
             issueCommentService.addComment(id, content, currentUserId(session));
         } catch (IssueForbiddenException e) {
             return "redirect:/issues/" + id + "?commentForbidden=true";
         }
+=======
+        issueCommentService.addComment(id, content, files, currentUserId(session));
+>>>>>>> origin/main
         return "redirect:/issues/" + id;
     }
 

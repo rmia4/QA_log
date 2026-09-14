@@ -63,4 +63,31 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
+    <!-- Tomcat 기본 에러 페이지(스택 트레이스·내부 경로 노출)를 그대로 보여주지 않고 /error로 모아서
+         처리한다(egovframework.common.controller.ErrorPageController, 2026-09-14 팀 결정) -->
+    <error-page>
+        <error-code>400</error-code>
+        <location>/error</location>
+    </error-page>
+    <error-page>
+        <error-code>403</error-code>
+        <location>/error</location>
+    </error-page>
+    <error-page>
+        <error-code>404</error-code>
+        <location>/error</location>
+    </error-page>
+    <error-page>
+        <error-code>409</error-code>
+        <location>/error</location>
+    </error-page>
+    <error-page>
+        <error-code>500</error-code>
+        <location>/error</location>
+    </error-page>
+    <error-page>
+        <exception-type>java.lang.Exception</exception-type>
+        <location>/error</location>
+    </error-page>
+
 </web-app>

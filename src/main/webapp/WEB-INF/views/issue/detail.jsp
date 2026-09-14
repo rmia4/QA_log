@@ -130,8 +130,13 @@
   .comment-author { font-size:13px; font-weight:700; }
   .comment-time { font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--ink-faint); }
   .comment-text { font-size:13.5px; color:var(--ink); background:var(--surface-2); border:1px solid var(--border); border-radius:0 10px 10px 10px; padding:10px 13px; white-space:pre-line; }
-  .composer { display:flex; gap:10px; border-top:1px solid var(--border); padding-top:16px; }
+  .comment-attachments { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .comment-attachments .thumb { width:96px; }
+  .comment-attachments .thumb img { height:64px; }
+  .composer { display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--border); padding-top:16px; }
+  .composer-row { display:flex; gap:10px; }
   .composer textarea { flex:1; resize:vertical; min-height:56px; font-family:inherit; font-size:13.5px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); color:var(--ink); }
+  .composer-files { font-size:12px; color:var(--ink-faint); }
 </style>
 </head>
 <body>
@@ -433,11 +438,21 @@
                   <span class="comment-time mono">${cm.createdAtDisplay}</span>
                 </div>
                 <div class="comment-text">${fn:escapeXml(cm.content)}</div>
+                <c:if test="${not empty cm.attachments}">
+                  <div class="comment-attachments">
+                    <c:forEach var="a" items="${cm.attachments}">
+                      <a class="thumb" href="${ctx}/issues/${issue.id}/attachments/${a.id}" target="_blank">
+                        <img src="${ctx}/issues/${issue.id}/attachments/${a.id}" alt="${fn:escapeXml(a.originalName)}">
+                      </a>
+                    </c:forEach>
+                  </div>
+                </c:if>
               </div>
             </div>
           </c:forEach>
           <c:if test="${empty comments}"><p class="empty">아직 댓글이 없습니다.</p></c:if>
         </div>
+<<<<<<< HEAD
         <c:choose>
           <c:when test="${canComment}">
             <form class="composer" action="${ctx}/issues/${issue.id}/comments" method="post">
@@ -449,6 +464,18 @@
             <p class="empty">프로젝트 담당자만 댓글을 작성할 수 있습니다.</p>
           </c:otherwise>
         </c:choose>
+=======
+        <form class="composer" action="${ctx}/issues/${issue.id}/comments" method="post" enctype="multipart/form-data">
+          <div class="composer-row">
+            <textarea name="content" placeholder="댓글을 입력하세요" required></textarea>
+            <button type="submit" class="btn btn-primary">댓글 등록</button>
+          </div>
+          <label class="composer-files">
+            <input type="file" name="files" multiple accept="image/png,image/jpeg,image/gif,image/webp">
+            스크린샷 첨부 (선택)
+          </label>
+        </form>
+>>>>>>> origin/main
       </div>
     </section>
   </main>
