@@ -1,6 +1,7 @@
 package egovframework.issue.service.impl;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,7 +107,9 @@ public class IssueServiceImpl implements IssueService {
     }
 
     @Override
-    public void updateIssueFields(Long id, IssueSaveRequestDTO request, Long actorId) {
+    public void updateIssueFields(Long id, IssueSaveRequestDTO request,
+            List<MultipartFile> files, List<MultipartFile> expectedResultFiles, List<MultipartFile> actualResultFiles,
+            List<Long> attachmentIdsToDelete, LocalDateTime expectedUpdatedAt, Long actorId) throws IOException {
         IssueDetailResponseDTO before = getIssueDetail(id);
         String changeGroupId = UUID.randomUUID().toString();
 
@@ -146,13 +149,49 @@ public class IssueServiceImpl implements IssueService {
         issue.setPriority(newPriority);
         issue.setUpdatedBy(actorId);
 
-        int affected = issueMapper.updateIssueFields(issue, request.getExpectedUpdatedAt());
+        int affected = issueMapper.updateIssueFields(issue, expectedUpdatedAt);
         if (affected == 0) {
             throw new IssueConflictException(id);
         }
 
         for (IssueHistoryVO change : changes) {
             issueHistoryMapper.insertHistory(change);
+        }
+
+        deleteAttachments(id, attachmentIdsToDelete, changeGroupId, actorId);
+        saveAttachmentsWithHistory(id, files, actorId, null, changeGroupId);
+        saveAttachmentsWithHistory(id, expectedResultFiles, actorId, "expected_result", changeGroupId);
+        saveAttachmentsWithHistory(id, actualResultFiles, actorId, "actual_result", changeGroupId);
+    }
+
+    /** 등록(createIssue)과 달리 수정 화면에서 추가한 첨부는 "첨부 추가" 이력을 남긴다(오류수정_기능명세서.md 2.2). */
+    private void saveAttachmentsWithHistory(Long issueId, List<MultipartFile> files, Long actorId, String context,
+            String changeGroupId) throws IOException {
+        if (files == null) {
+            return;
+        }
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                continue;
+            }
+            saveAttachment(issueId, changeGroupId, file, actorId, context);
+        }
+    }
+
+    /** attachmentIdsToDelete에 있는 항목 중 실제로 이 issue 소속인 것만 삭제한다(다른 이슈 첨부 id는 조용히 무시). */
+    private void deleteAttachments(Long issueId, List<Long> attachmentIdsToDelete, String changeGroupId, Long actorId)
+            throws IOException {
+        if (attachmentIdsToDelete == null) {
+            return;
+        }
+        for (Long attachmentId : attachmentIdsToDelete) {
+            IssueAttachmentVO attachment = issueAttachmentMapper.selectAttachmentById(attachmentId);
+            if (attachment == null || !attachment.getIssueId().equals(issueId)) {
+                continue;
+            }
+            Files.deleteIfExists(attachmentStorageService.resolve(issueId, attachment.getStorageKey()));
+            issueAttachmentMapper.deleteAttachment(attachmentId);
+            recordEvent(issueId, changeGroupId, IssueEventType.ATTACHMENT_REMOVED.getCode(), attachmentId, actorId);
         }
     }
 

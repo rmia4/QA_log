@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import java.io.IOException;
 import java.util.List;
 import java.time.LocalDateTime;
 
@@ -136,7 +137,12 @@ public class IssueRegisterViewControllerTest {
         }
 
         @Override public IssueDetailResponseDTO getIssueDetail(Long id) { throw new UnsupportedOperationException(); }
-        @Override public void updateIssueFields(Long id, IssueSaveRequestDTO request, Long actorId) { throw new UnsupportedOperationException(); }
+        @Override
+        public void updateIssueFields(Long id, IssueSaveRequestDTO request,
+                List<MultipartFile> files, List<MultipartFile> expectedResultFiles, List<MultipartFile> actualResultFiles,
+                List<Long> attachmentIdsToDelete, LocalDateTime expectedUpdatedAt, Long actorId) throws IOException {
+            throw new UnsupportedOperationException();
+        }
         @Override public void changeAssignee(Long id, Long assigneeId, LocalDateTime expectedUpdatedAt, Long actorId) { throw new UnsupportedOperationException(); }
         @Override public void changeStatus(Long id, String status, LocalDateTime expectedUpdatedAt, Long actorId) { throw new UnsupportedOperationException(); }
         @Override public void closeIssue(Long id, LocalDateTime expectedUpdatedAt, Long actorId) { throw new UnsupportedOperationException(); }

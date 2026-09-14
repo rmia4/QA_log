@@ -221,6 +221,7 @@
             <button type="submit" class="btn btn-primary">다시 열기</button>
           </form>
         </c:if>
+        <a class="btn" href="${ctx}/issues/${issue.id}/edit">수정</a>
       </div>
     </div>
 
@@ -333,6 +334,7 @@
                 <c:choose>
                   <c:when test="${h.eventType == 'created'}"><b>${fn:escapeXml(h.actorName)}</b>님이 오류를 등록했습니다</c:when>
                   <c:when test="${h.eventType == 'attachment_added'}"><b>${fn:escapeXml(h.actorName)}</b>님이 스크린샷을 첨부했습니다</c:when>
+                  <c:when test="${h.eventType == 'attachment_removed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 첨부파일을 삭제했습니다</c:when>
                   <c:when test="${h.eventType == 'field_changed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 ${fn:escapeXml(h.fieldLabel)}${h.fieldJosaEul} ${fn:escapeXml(h.oldValueDisplay)} → ${fn:escapeXml(h.newValueDisplay)}${h.newValueJosaRo} 변경</c:when>
                   <c:otherwise>${fn:escapeXml(h.eventType)}</c:otherwise>
                 </c:choose>

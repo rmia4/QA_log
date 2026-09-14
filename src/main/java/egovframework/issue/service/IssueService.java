@@ -22,8 +22,17 @@ public interface IssueService {
     Long createIssue(Long projectId, IssueSaveRequestDTO request, List<MultipartFile> files,
             List<MultipartFile> expectedResultFiles, List<MultipartFile> actualResultFiles, Long actorId) throws IOException;
 
-    /** 실제로 값이 바뀐 필드만 골라 하나의 change_group_id로 이력을 남긴다(오류상세_기능명세서.md 4.2). */
-    void updateIssueFields(Long id, IssueSaveRequestDTO request, Long actorId);
+    /**
+     * 실제로 값이 바뀐 필드만 골라 하나의 change_group_id로 이력을 남긴다(오류상세_기능명세서.md 4.2).
+     * 신규 첨부(files/expectedResultFiles/actualResultFiles)와 기존 첨부 삭제(attachmentIdsToDelete)도
+     * 같은 저장 요청으로 함께 처리한다(오류수정_기능명세서.md 2.2) - 등록과 달리 여기서는 첨부
+     * 추가/삭제 각각 별도 이력을 남긴다. expectedUpdatedAt은 DTO가 아니라 별도 인자로 받는다 -
+     * 브라우저 폼 제출(IssueViewController)에서는 String으로 받아 직접 파싱한 값을 넘기고,
+     * JSON API(IssueController)에서는 request.getExpectedUpdatedAt()을 그대로 넘긴다.
+     */
+    void updateIssueFields(Long id, IssueSaveRequestDTO request,
+            List<MultipartFile> files, List<MultipartFile> expectedResultFiles, List<MultipartFile> actualResultFiles,
+            List<Long> attachmentIdsToDelete, LocalDateTime expectedUpdatedAt, Long actorId) throws IOException;
 
     void changeAssignee(Long id, Long assigneeId, LocalDateTime expectedUpdatedAt, Long actorId);
 
