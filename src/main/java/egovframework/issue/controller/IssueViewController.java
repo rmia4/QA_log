@@ -64,8 +64,7 @@ public class IssueViewController {
 
     @RequestMapping(method = RequestMethod.GET)
     public String detail(@PathVariable Long id, @RequestParam(required = false) String conflict,
-            @RequestParam(required = false) String forbidden,
-            @RequestParam(required = false) String commentForbidden, Model model, HttpSession session) {
+            @RequestParam(required = false) String forbidden, Model model, HttpSession session) {
         IssueDetailResponseDTO issue = issueService.getIssueDetail(id);
         Long actorId = currentUserId(session);
         List<IssueHistoryResponseDTO> histories = issueService.getHistories(id);
@@ -77,14 +76,14 @@ public class IssueViewController {
         model.addAttribute("statusOptions", Arrays.asList(IssueStatus.NEW, IssueStatus.REVIEWING, IssueStatus.FIXING));
         model.addAttribute("conflict", conflict != null);
         model.addAttribute("forbidden", forbidden != null);
-        model.addAttribute("commentForbidden", commentForbidden != null);
         // 오류 등록자/처리 담당자만 본문 수정·상태변경·종료·재오픈이 가능(2026-09-14 팀 결정) - 그 외에는
         // 관련 버튼/폼 자체를 화면에서 숨긴다. canClaimAssignee는 담당자가 아직 없는(미지정) 오류에 한해
         // 누구나 자기 자신을 담당자로 지정할 수 있는 예외(IssueServiceImpl.requireAssigneeChangePermission 참고).
+        // 댓글은 프로젝트 담당자 여부와 무관하게 로그인한 전원이 작성 가능(2026-09-14 재확인 - 동기
+        // 브랜치 병합 중 "프로젝트 담당자만 댓글 가능"으로 바뀌어 있던 걸 원래 정책으로 되돌림).
         boolean canManage = canManage(issue, actorId);
         model.addAttribute("canManage", canManage);
         model.addAttribute("canClaimAssignee", canManage || issue.getAssigneeId() == null);
-        model.addAttribute("canComment", projectService.isProjectAssignee(issue.getProjectId(), actorId));
         return "issue/detail";
     }
 
@@ -137,15 +136,7 @@ public class IssueViewController {
         if (currentUserId(session) == null) {
             return "redirect:/login";
         }
-<<<<<<< HEAD
-        try {
-            issueCommentService.addComment(id, content, currentUserId(session));
-        } catch (IssueForbiddenException e) {
-            return "redirect:/issues/" + id + "?commentForbidden=true";
-        }
-=======
         issueCommentService.addComment(id, content, files, currentUserId(session));
->>>>>>> origin/main
         return "redirect:/issues/" + id;
     }
 
