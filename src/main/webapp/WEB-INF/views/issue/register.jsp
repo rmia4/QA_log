@@ -50,6 +50,7 @@
     color:var(--ink-faint); font-size:13px; cursor:pointer; background:var(--surface-2);
   }
   .dropzone.dragover { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+  .dropzone-sm { padding:10px; font-size:12px; margin-top:2px; }
   .file-list { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
   .file-item {
     display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -137,11 +138,19 @@
       <div class="field">
         <label>기대 결과</label>
         <textarea name="expectedResult"></textarea>
+        <div class="dropzone dropzone-sm" id="dropzone-expected">스크린샷 첨부 (선택)</div>
+        <input type="file" id="fileInput-expected" name="expectedResultFiles" multiple accept="image/png,image/jpeg,image/gif,image/webp" style="display:none">
+        <div class="file-list" id="fileList-expected"></div>
+        <div class="file-reject" id="fileReject-expected"></div>
       </div>
 
       <div class="field">
         <label>실제 결과</label>
         <textarea name="actualResult"></textarea>
+        <div class="dropzone dropzone-sm" id="dropzone-actual">스크린샷 첨부 (선택)</div>
+        <input type="file" id="fileInput-actual" name="actualResultFiles" multiple accept="image/png,image/jpeg,image/gif,image/webp" style="display:none">
+        <div class="file-list" id="fileList-actual"></div>
+        <div class="file-reject" id="fileReject-actual"></div>
       </div>
 
       <div class="field row2">
@@ -209,14 +218,9 @@
   </main>
 
   <script>
-    var dropzone = document.getElementById('dropzone');
-    var fileInput = document.getElementById('fileInput');
-    var fileList = document.getElementById('fileList');
-    var fileReject = document.getElementById('fileReject');
     var registerForm = document.getElementById('registerForm');
     var submitButton = document.getElementById('submitButton');
     var allowed = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
-    var selectedFiles = [];
     var submitting = false;
 
     registerForm.addEventListener('keydown', function (e) {
@@ -235,54 +239,74 @@
       submitButton.textContent = '등록 중...';
     });
 
-    dropzone.addEventListener('click', function () { fileInput.click(); });
-    dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.classList.add('dragover'); });
-    dropzone.addEventListener('dragleave', function () { dropzone.classList.remove('dragover'); });
-    dropzone.addEventListener('drop', function (e) {
-      e.preventDefault();
-      dropzone.classList.remove('dragover');
-      addFiles(e.dataTransfer.files);
-    });
-    fileInput.addEventListener('change', function () { addFiles(fileInput.files); fileInput.value = ''; });
+    /** 첨부 드롭존 하나(일반/기대결과/실제결과 각각)를 독립적으로 동작하게 만든다. */
+    function setupDropzone(dropzoneId, fileInputId, fileListId, fileRejectId) {
+      var dropzone = document.getElementById(dropzoneId);
+      var fileInput = document.getElementById(fileInputId);
+      var fileList = document.getElementById(fileListId);
+      var fileReject = document.getElementById(fileRejectId);
+      var selectedFiles = [];
 
-    function addFiles(fileArrayLike) {
-      var rejected = [];
-      for (var i = 0; i < fileArrayLike.length; i++) {
-        var f = fileArrayLike[i];
-        if (allowed.indexOf(f.type) === -1) {
-          rejected.push(f.name);
-          continue;
-        }
-        selectedFiles.push(f);
-      }
-      fileReject.textContent = rejected.length ? ('허용되지 않는 형식이라 제외됨: ' + rejected.join(', ')) : '';
-      renderFileList();
-      syncInputFiles();
-    }
-
-    function renderFileList() {
-      fileList.innerHTML = '';
-      selectedFiles.forEach(function (f, idx) {
-        var row = document.createElement('div');
-        row.className = 'file-item';
-        var kb = Math.round(f.size / 1024);
-        row.innerHTML = '<span class="name"></span><span class="size mono">' + kb + ' KB</span>' +
-          '<button type="button" class="remove" aria-label="제거">×</button>';
-        row.querySelector('.name').textContent = f.name;
-        row.querySelector('.remove').addEventListener('click', function () {
-          selectedFiles.splice(idx, 1);
-          renderFileList();
-          syncInputFiles();
-        });
-        fileList.appendChild(row);
+      dropzone.addEventListener('click', function () { fileInput.click(); });
+      dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.classList.add('dragover'); });
+      dropzone.addEventListener('dragleave', function () { dropzone.classList.remove('dragover'); });
+      dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        addFiles(e.dataTransfer.files);
       });
+      fileInput.addEventListener('change', function () {
+        // fileInput.files는 일부 브라우저에서 fileInput 자신과 연결된 살아있는(live) 참조라서,
+        // 미리 변수에 담아둬도 이후 fileInput.value를 지우면 같이 비어버린다.
+        // File 객체 자체를 별도 배열로 복사해 완전히 분리한 뒤에 초기화해야 한다.
+        var picked = Array.prototype.slice.call(fileInput.files);
+        fileInput.value = '';
+        addFiles(picked);
+      });
+
+      function addFiles(fileArrayLike) {
+        var rejected = [];
+        for (var i = 0; i < fileArrayLike.length; i++) {
+          var f = fileArrayLike[i];
+          if (allowed.indexOf(f.type) === -1) {
+            rejected.push(f.name);
+            continue;
+          }
+          selectedFiles.push(f);
+        }
+        fileReject.textContent = rejected.length ? ('허용되지 않는 형식이라 제외됨: ' + rejected.join(', ')) : '';
+        renderFileList();
+        syncInputFiles();
+      }
+
+      function renderFileList() {
+        fileList.innerHTML = '';
+        selectedFiles.forEach(function (f, idx) {
+          var row = document.createElement('div');
+          row.className = 'file-item';
+          var kb = Math.round(f.size / 1024);
+          row.innerHTML = '<span class="name"></span><span class="size mono">' + kb + ' KB</span>' +
+            '<button type="button" class="remove" aria-label="제거">×</button>';
+          row.querySelector('.name').textContent = f.name;
+          row.querySelector('.remove').addEventListener('click', function () {
+            selectedFiles.splice(idx, 1);
+            renderFileList();
+            syncInputFiles();
+          });
+          fileList.appendChild(row);
+        });
+      }
+
+      function syncInputFiles() {
+        var dt = new DataTransfer();
+        selectedFiles.forEach(function (f) { dt.items.add(f); });
+        fileInput.files = dt.files;
+      }
     }
 
-    function syncInputFiles() {
-      var dt = new DataTransfer();
-      selectedFiles.forEach(function (f) { dt.items.add(f); });
-      fileInput.files = dt.files;
-    }
+    setupDropzone('dropzone', 'fileInput', 'fileList', 'fileReject');
+    setupDropzone('dropzone-expected', 'fileInput-expected', 'fileList-expected', 'fileReject-expected');
+    setupDropzone('dropzone-actual', 'fileInput-actual', 'fileList-actual', 'fileReject-actual');
   </script>
 </body>
 </html>

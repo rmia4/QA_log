@@ -3,6 +3,7 @@ package egovframework.issue.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import egovframework.common.KoreanDateTime;
 import egovframework.issue.vo.IssueAttachmentVO;
 import lombok.Getter;
 import lombok.Setter;
@@ -50,4 +51,20 @@ public class IssueDetailResponseDTO {
     private LocalDateTime updatedAt;
 
     private List<IssueAttachmentVO> attachments;
+
+    /**
+     * 화면 표시용 - 한국 시간(KST) "yyyy-MM-dd HH:mm"만. 낙관적 잠금용 hidden expectedUpdatedAt
+     * 필드에는 절대 쓰지 말 것(getUpdatedAt()의 원본 정밀도가 그대로 필요함) - KoreanDateTime 참고.
+     */
+    public String getCreatedAtDisplay() {
+        return KoreanDateTime.format(createdAt);
+    }
+
+    public String getUpdatedAtDisplay() {
+        return KoreanDateTime.format(updatedAt);
+    }
+
+    public String getClosedAtDisplay() {
+        return KoreanDateTime.format(closedAt);
+    }
 }
