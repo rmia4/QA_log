@@ -365,11 +365,11 @@
 
     <section class="panel">
       <div class="tabs-nav">
-        <button class="tab-btn" id="tabBtnHistory" onclick="showTab('history')">변경 이력 <span class="mono">${histories.size()}</span></button>
-        <button class="tab-btn active" id="tabBtnComments" onclick="showTab('comments')">댓글 <span class="mono">${comments.size()}</span></button>
+        <button class="tab-btn active" id="tabBtnHistory" onclick="showTab('history')">변경 이력 <span class="mono">${histories.size()}</span></button>
+        <button class="tab-btn" id="tabBtnComments" onclick="showTab('comments')">댓글 <span class="mono">${comments.size()}</span></button>
       </div>
 
-      <div class="tab-panel" id="panelHistory" hidden>
+      <div class="tab-panel" id="panelHistory">
         <div class="log-list">
           <c:forEach var="g" items="${historyGroups}">
             <c:choose>
@@ -424,7 +424,7 @@
         </div>
       </div>
 
-      <div class="tab-panel" id="panelComments">
+      <div class="tab-panel" id="panelComments" hidden>
         <div class="comment-list">
           <c:forEach var="cm" items="${comments}">
             <div class="comment-card">
