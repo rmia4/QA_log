@@ -3,8 +3,8 @@
 <mapper namespace="egovframework.issue.mapper.IssueAttachmentMapper">
 
     <insert id="insertAttachment" parameterType="egovframework.issue.vo.IssueAttachmentVO" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO issue_attachments (issue_id, original_name, storage_key, mime_type, size_bytes, uploaded_by, context)
-        VALUES (#{issueId}, #{originalName}, #{storageKey}, #{mimeType}, #{sizeBytes}, #{uploadedBy}, #{context})
+        INSERT INTO issue_attachments (issue_id, original_name, storage_key, mime_type, size_bytes, uploaded_by, context, comment_id)
+        VALUES (#{issueId}, #{originalName}, #{storageKey}, #{mimeType}, #{sizeBytes}, #{uploadedBy}, #{context}, #{commentId})
     </insert>
 
     <resultMap id="issueAttachmentResultMap" type="egovframework.issue.vo.IssueAttachmentVO">
@@ -17,17 +17,27 @@
         <result column="uploaded_by"   property="uploadedBy" />
         <result column="created_at"    property="createdAt" />
         <result column="context"       property="context" />
+        <result column="comment_id"    property="commentId" />
     </resultMap>
 
+    <!-- 오류 본문에 딸린 첨부만(댓글 전용 첨부는 selectCommentAttachments로 별도 조회) -->
     <select id="selectAttachments" parameterType="long" resultMap="issueAttachmentResultMap">
-        SELECT id, issue_id, original_name, storage_key, mime_type, size_bytes, uploaded_by, created_at, context
+        SELECT id, issue_id, original_name, storage_key, mime_type, size_bytes, uploaded_by, created_at, context, comment_id
         FROM issue_attachments
-        WHERE issue_id = #{issueId}
+        WHERE issue_id = #{issueId} AND comment_id IS NULL
+        ORDER BY created_at ASC, id ASC
+    </select>
+
+    <!-- 이슈 전체 댓글의 첨부를 한 번에 조회 - 댓글별로 묶는 건 IssueCommentServiceImpl에서 처리 -->
+    <select id="selectCommentAttachments" parameterType="long" resultMap="issueAttachmentResultMap">
+        SELECT id, issue_id, original_name, storage_key, mime_type, size_bytes, uploaded_by, created_at, context, comment_id
+        FROM issue_attachments
+        WHERE issue_id = #{issueId} AND comment_id IS NOT NULL
         ORDER BY created_at ASC, id ASC
     </select>
 
     <select id="selectAttachmentById" parameterType="long" resultMap="issueAttachmentResultMap">
-        SELECT id, issue_id, original_name, storage_key, mime_type, size_bytes, uploaded_by, created_at, context
+        SELECT id, issue_id, original_name, storage_key, mime_type, size_bytes, uploaded_by, created_at, context, comment_id
         FROM issue_attachments
         WHERE id = #{id}
     </select>

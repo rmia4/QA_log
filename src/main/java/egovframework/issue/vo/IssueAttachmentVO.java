@@ -23,4 +23,7 @@ public class IssueAttachmentVO {
 
     /** null=오류 본문 전체에 딸린 일반 첨부, "expected_result"/"actual_result"=해당 필드 전용 첨부 */
     private String context;
+
+    /** null=오류 본문에 딸린 첨부, not null=해당 댓글 전용 첨부(댓글 id) */
+    private Long commentId;
 }

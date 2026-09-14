@@ -128,11 +128,13 @@ public class IssueViewController {
     }
 
     @RequestMapping(value = "/comments", method = RequestMethod.POST)
-    public String addComment(@PathVariable Long id, @RequestParam String content, HttpSession session) {
+    public String addComment(@PathVariable Long id, @RequestParam String content,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files,
+            HttpSession session) throws IOException {
         if (currentUserId(session) == null) {
             return "redirect:/login";
         }
-        issueCommentService.addComment(id, content, currentUserId(session));
+        issueCommentService.addComment(id, content, files, currentUserId(session));
         return "redirect:/issues/" + id;
     }
 
