@@ -156,7 +156,7 @@
                                     <th>상태</th>
                                     <th>심각도</th>
                                     <th>담당자</th>
-                                    <th>${sort == 'createdAt' ? '등록일' : '최근 수정'}</th>
+                                    <th>등록일</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -191,7 +191,7 @@
                                             </span>
                                         </td>
                                         <td><c:out value="${empty issue.assigneeName ? '미지정' : issue.assigneeName}" /></td>
-                                        <td class="updated-at"><c:out value="${sort == 'createdAt' ? issue.createdAt : issue.updatedAt}" /></td>
+                                        <td class="updated-at"><c:out value="${issue.createdAtDisplay}" /></td>
                                     </tr>
                                 </c:forEach>
                             </tbody>
