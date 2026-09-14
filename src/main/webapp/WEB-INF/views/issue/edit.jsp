@@ -105,6 +105,7 @@
             <span class="project-copy">
               <strong><c:out value="${projectItem.name}" /></strong>
               <small>미종료 오류 ${projectItem.openIssueCount}건</small>
+              <small class="project-assignees">담당자 <c:out value="${empty projectItem.assigneeNames ? '미지정' : projectItem.assigneeNames}" /></small>
             </span>
             <span class="project-count">${projectItem.openIssueCount}</span>
           </a>

@@ -10,12 +10,24 @@
         <result column="created_at"  property="createdAt" />
         <result column="updated_at"  property="updatedAt" />
         <result column="open_issue_count" property="openIssueCount" />
+        <result column="assignee_names" property="assigneeNames" />
+        <collection property="assigneeIds" column="id" select="selectProjectAssigneeIds" />
     </resultMap>
 
+    <sql id="projectColumns">
+        p.id, p.name, p.status, p.created_by, p.created_at, p.updated_at,
+        (SELECT COUNT(*) FROM issues i
+         WHERE i.project_id = p.id AND i.status != 'closed') AS open_issue_count,
+        COALESCE((
+            SELECT STRING_AGG(u.display_name, ', ' ORDER BY u.display_name, u.id)
+            FROM project_assignees pa
+            JOIN users u ON u.id = pa.user_id
+            WHERE pa.project_id = p.id
+        ), '') AS assignee_names
+    </sql>
+
     <select id="selectProjectList" resultMap="projectResultMap">
-        SELECT
-            p.id, p.name, p.status, p.created_by, p.created_at, p.updated_at,
-            (SELECT COUNT(*) FROM issues i WHERE i.project_id = p.id AND i.status != 'closed') AS open_issue_count
+        SELECT <include refid="projectColumns" />
         FROM projects p
         ORDER BY CASE p.status
             WHEN 'in_progress' THEN 1
@@ -27,15 +39,40 @@
     </select>
 
     <select id="selectProject" parameterType="long" resultMap="projectResultMap">
-        SELECT id, name, status, created_by, created_at, updated_at, 0 AS open_issue_count
-        FROM projects
-        WHERE id = #{id}
+        SELECT <include refid="projectColumns" />
+        FROM projects p
+        WHERE p.id = #{id}
     </select>
 
-    <insert id="insertProject" parameterType="egovframework.project.vo.ProjectVO" useGeneratedKeys="true" keyProperty="id">
+    <select id="selectProjectAssigneeIds" parameterType="long" resultType="long">
+        SELECT user_id
+        FROM project_assignees
+        WHERE project_id = #{projectId}
+        ORDER BY user_id
+    </select>
+
+    <select id="existsProjectAssignee" resultType="boolean">
+        SELECT COUNT(*) &gt; 0
+        FROM project_assignees
+        WHERE project_id = #{projectId}
+          AND user_id = #{userId}
+    </select>
+
+    <insert id="insertProject" parameterType="egovframework.project.vo.ProjectVO"
+            useGeneratedKeys="true" keyProperty="id">
         INSERT INTO projects (name, status, created_by)
         VALUES (#{name}, #{status}, #{createdBy})
     </insert>
+
+    <insert id="insertProjectAssignee">
+        INSERT INTO project_assignees (project_id, user_id)
+        VALUES (#{projectId}, #{userId})
+    </insert>
+
+    <delete id="deleteProjectAssignees" parameterType="long">
+        DELETE FROM project_assignees
+        WHERE project_id = #{projectId}
+    </delete>
 
     <update id="updateProject">
         UPDATE projects

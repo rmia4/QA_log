@@ -10,9 +10,11 @@ public interface ProjectService {
 
     ProjectVO getProject(Long id);
 
-    ProjectVO createProject(String name, String status, Long createdBy);
+    ProjectVO createProject(String name, String status, Long createdBy, List<Long> assigneeIds);
 
-    void updateProject(Long id, String name, String status);
+    void updateProject(Long id, String name, String status, List<Long> assigneeIds, Long actorId);
 
-    boolean archiveProject(Long id);
+    boolean archiveProject(Long id, Long actorId);
+
+    boolean isProjectAssignee(Long projectId, Long userId);
 }

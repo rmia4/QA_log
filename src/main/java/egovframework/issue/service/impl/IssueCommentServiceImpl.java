@@ -8,12 +8,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import egovframework.issue.dto.IssueCommentResponseDTO;
 import egovframework.issue.exception.EmptyCommentException;
+import egovframework.issue.exception.IssueForbiddenException;
+import egovframework.issue.exception.IssueNotFoundException;
 import egovframework.issue.gubun.IssueEventType;
 import egovframework.issue.mapper.IssueCommentMapper;
 import egovframework.issue.mapper.IssueHistoryMapper;
+import egovframework.issue.mapper.IssueMapper;
 import egovframework.issue.service.IssueCommentService;
 import egovframework.issue.vo.IssueCommentVO;
 import egovframework.issue.vo.IssueHistoryVO;
+import egovframework.project.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -23,6 +27,8 @@ public class IssueCommentServiceImpl implements IssueCommentService {
 
     private final IssueCommentMapper issueCommentMapper;
     private final IssueHistoryMapper issueHistoryMapper;
+    private final IssueMapper issueMapper;
+    private final ProjectService projectService;
 
     @Override
     @Transactional(readOnly = true)
@@ -32,6 +38,13 @@ public class IssueCommentServiceImpl implements IssueCommentService {
 
     @Override
     public Long addComment(Long issueId, String content, Long actorId) {
+        Long projectId = issueMapper.selectProjectId(issueId);
+        if (projectId == null) {
+            throw new IssueNotFoundException(issueId);
+        }
+        if (!projectService.isProjectAssignee(projectId, actorId)) {
+            throw new IssueForbiddenException(issueId);
+        }
         if (content == null || content.trim().isEmpty()) {
             throw new EmptyCommentException();
         }

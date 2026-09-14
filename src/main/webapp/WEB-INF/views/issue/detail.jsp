@@ -147,6 +147,9 @@
     <c:if test="${forbidden}">
       <div class="conflict-banner">이 작업은 오류 등록자 또는 처리 담당자만 할 수 있습니다.</div>
     </c:if>
+    <c:if test="${commentForbidden}">
+      <div class="conflict-banner">댓글은 이 프로젝트의 담당자만 작성할 수 있습니다.</div>
+    </c:if>
 
     <div class="crumb">${fn:escapeXml(issue.projectName)} <span class="sep">/</span> <span class="mono">#${issue.issueNumber}</span></div>
 
@@ -435,10 +438,17 @@
           </c:forEach>
           <c:if test="${empty comments}"><p class="empty">아직 댓글이 없습니다.</p></c:if>
         </div>
-        <form class="composer" action="${ctx}/issues/${issue.id}/comments" method="post">
-          <textarea name="content" placeholder="댓글을 입력하세요" required></textarea>
-          <button type="submit" class="btn btn-primary">댓글 등록</button>
-        </form>
+        <c:choose>
+          <c:when test="${canComment}">
+            <form class="composer" action="${ctx}/issues/${issue.id}/comments" method="post">
+              <textarea name="content" placeholder="댓글을 입력하세요" required></textarea>
+              <button type="submit" class="btn btn-primary">댓글 등록</button>
+            </form>
+          </c:when>
+          <c:otherwise>
+            <p class="empty">프로젝트 담당자만 댓글을 작성할 수 있습니다.</p>
+          </c:otherwise>
+        </c:choose>
       </div>
     </section>
   </main>

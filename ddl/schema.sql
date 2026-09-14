@@ -37,6 +37,16 @@ CREATE TABLE projects (
     CONSTRAINT ck_projects_status CHECK (status IN ('in_progress', 'maintenance', 'on_hold', 'archived'))
 );
 
+CREATE TABLE project_assignees (
+    project_id BIGINT NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
+    user_id    BIGINT NOT NULL REFERENCES users (id),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (project_id, user_id)
+);
+
+CREATE INDEX idx_project_assignees_user_project
+    ON project_assignees (user_id, project_id);
+
 CREATE TABLE issues (
     id                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     issue_number        BIGINT          NOT NULL,
