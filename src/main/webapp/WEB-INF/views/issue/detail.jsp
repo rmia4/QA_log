@@ -135,6 +135,9 @@
     <c:if test="${conflict}">
       <div class="conflict-banner">다른 사용자가 먼저 수정했습니다. 아래 내용을 새로고침한 뒤 다시 시도하세요.</div>
     </c:if>
+    <c:if test="${forbidden}">
+      <div class="conflict-banner">이 작업은 오류 등록자 또는 처리 담당자만 할 수 있습니다.</div>
+    </c:if>
 
     <div class="crumb">${fn:escapeXml(issue.projectName)} <span class="sep">/</span> <span class="mono">#${issue.issueNumber}</span></div>
 
@@ -178,51 +181,78 @@
           <span class="k">등록자</span>
           <span class="v">${fn:escapeXml(issue.createdByName)} · <span class="mono">${issue.createdAtDisplay}</span></span>
         </div>
-        <form class="assignee-form" action="${ctx}/issues/${issue.id}/assignee" method="post">
-          <div class="meta-item">
-            <span class="k">현재 처리 담당자</span>
-            <select name="assigneeId">
-              <option value="">미지정</option>
-              <c:forEach var="u" items="${users}">
-                <option value="${u.id}" ${u.id == issue.assigneeId ? 'selected' : ''}>${fn:escapeXml(u.displayName)}</option>
-              </c:forEach>
-            </select>
-          </div>
-          <!-- expectedUpdatedAt은 낙관적 잠금 대조용 원본 정밀도 값 - 화면표시(createdAtDisplay 등)와
-               달리 절대 KoreanDateTime으로 가공하면 안 된다. -->
-          <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
-          <button type="submit" class="btn">변경</button>
-        </form>
+        <c:choose>
+          <c:when test="${canManage}">
+            <form class="assignee-form" action="${ctx}/issues/${issue.id}/assignee" method="post">
+              <div class="meta-item">
+                <span class="k">현재 처리 담당자</span>
+                <select name="assigneeId">
+                  <option value="">미지정</option>
+                  <c:forEach var="u" items="${users}">
+                    <option value="${u.id}" ${u.id == issue.assigneeId ? 'selected' : ''}>${fn:escapeXml(u.displayName)}</option>
+                  </c:forEach>
+                </select>
+              </div>
+              <!-- expectedUpdatedAt은 낙관적 잠금 대조용 원본 정밀도 값 - 화면표시(createdAtDisplay 등)와
+                   달리 절대 KoreanDateTime으로 가공하면 안 된다. -->
+              <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
+              <button type="submit" class="btn">변경</button>
+            </form>
+          </c:when>
+          <c:when test="${canClaimAssignee}">
+            <%-- 담당자 미지정 상태의 예외 - 등록자/담당자가 아니어도 자기 자신만 담당자로 지정 가능
+                 (등록자·담당자가 둘 다 자리를 비워 오류가 영원히 미지정으로 남는 것을 막기 위함) --%>
+            <form class="assignee-form" action="${ctx}/issues/${issue.id}/assignee" method="post">
+              <div class="meta-item">
+                <span class="k">현재 처리 담당자</span>
+                <select name="assigneeId">
+                  <option value="" selected>미지정</option>
+                  <option value="${sessionScope.LOGIN_USER_ID}">${fn:escapeXml(sessionScope.loginDisplayName)}(나)</option>
+                </select>
+              </div>
+              <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
+              <button type="submit" class="btn">내가 맡기</button>
+            </form>
+          </c:when>
+          <c:otherwise>
+            <div class="meta-item">
+              <span class="k">현재 처리 담당자</span>
+              <span class="v">${empty issue.assigneeName ? '미지정' : fn:escapeXml(issue.assigneeName)}</span>
+            </div>
+          </c:otherwise>
+        </c:choose>
         <div class="meta-item">
           <span class="k">최근 변경</span>
           <span class="v">${fn:escapeXml(issue.updatedByName)} · <span class="mono">${issue.updatedAtDisplay}</span></span>
         </div>
       </div>
-      <div class="meta-actions">
-        <%-- 아래 상태변경/종료/재오픈 폼의 expectedUpdatedAt도 위 담당자 폼과 동일하게 원본 정밀도 값을 그대로 써야 함 --%>
-        <c:if test="${issue.status != 'closed'}">
-          <form class="inline" action="${ctx}/issues/${issue.id}/status" method="post">
-            <select name="status">
-              <c:forEach var="opt" items="${statusOptions}">
-                <option value="${opt.code}" ${opt.code == issue.status ? 'selected' : ''}>${opt.label}</option>
-              </c:forEach>
-            </select>
-            <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
-            <button type="submit" class="btn">상태 변경</button>
-          </form>
-          <form class="inline" action="${ctx}/issues/${issue.id}/close" method="post">
-            <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
-            <button type="submit" class="btn btn-danger">종료</button>
-          </form>
-        </c:if>
-        <c:if test="${issue.status == 'closed'}">
-          <form class="inline" action="${ctx}/issues/${issue.id}/reopen" method="post">
-            <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
-            <button type="submit" class="btn btn-primary">다시 열기</button>
-          </form>
-        </c:if>
-        <a class="btn" href="${ctx}/issues/${issue.id}/edit">수정</a>
-      </div>
+      <c:if test="${canManage}">
+        <div class="meta-actions">
+          <%-- 아래 상태변경/종료/재오픈 폼의 expectedUpdatedAt도 위 담당자 폼과 동일하게 원본 정밀도 값을 그대로 써야 함 --%>
+          <c:if test="${issue.status != 'closed'}">
+            <form class="inline" action="${ctx}/issues/${issue.id}/status" method="post">
+              <select name="status">
+                <c:forEach var="opt" items="${statusOptions}">
+                  <option value="${opt.code}" ${opt.code == issue.status ? 'selected' : ''}>${opt.label}</option>
+                </c:forEach>
+              </select>
+              <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
+              <button type="submit" class="btn">상태 변경</button>
+            </form>
+            <form class="inline" action="${ctx}/issues/${issue.id}/close" method="post">
+              <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
+              <button type="submit" class="btn btn-danger">종료</button>
+            </form>
+          </c:if>
+          <c:if test="${issue.status == 'closed'}">
+            <form class="inline" action="${ctx}/issues/${issue.id}/reopen" method="post">
+              <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
+              <button type="submit" class="btn btn-primary">다시 열기</button>
+            </form>
+          </c:if>
+          <a class="btn" href="${ctx}/issues/${issue.id}/edit">수정</a>
+        </div>
+      </c:if>
     </div>
 
     <section class="panel">

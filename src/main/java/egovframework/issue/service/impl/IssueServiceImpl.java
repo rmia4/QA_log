@@ -16,6 +16,7 @@ import egovframework.issue.dto.IssueDetailResponseDTO;
 import egovframework.issue.dto.IssueHistoryResponseDTO;
 import egovframework.issue.dto.request.IssueSaveRequestDTO;
 import egovframework.issue.exception.IssueConflictException;
+import egovframework.issue.exception.IssueForbiddenException;
 import egovframework.issue.exception.IssueNotFoundException;
 import egovframework.issue.gubun.IssueEventType;
 import egovframework.issue.gubun.IssuePriority;
@@ -111,6 +112,7 @@ public class IssueServiceImpl implements IssueService {
             List<MultipartFile> files, List<MultipartFile> expectedResultFiles, List<MultipartFile> actualResultFiles,
             List<Long> attachmentIdsToDelete, LocalDateTime expectedUpdatedAt, Long actorId) throws IOException {
         IssueDetailResponseDTO before = getIssueDetail(id);
+        requireManagePermission(before, actorId);
         String changeGroupId = UUID.randomUUID().toString();
 
         // severity/priority는 빈 값이 오면 "미지정"으로 저장하므로, 이력 비교와 실제 저장값 모두
@@ -198,6 +200,7 @@ public class IssueServiceImpl implements IssueService {
     @Override
     public void changeAssignee(Long id, Long assigneeId, LocalDateTime expectedUpdatedAt, Long actorId) {
         IssueDetailResponseDTO before = getIssueDetail(id);
+        requireAssigneeChangePermission(before, actorId, assigneeId);
         int affected = issueMapper.updateAssignee(id, assigneeId, actorId, expectedUpdatedAt);
         if (affected == 0) {
             throw new IssueConflictException(id);
@@ -209,6 +212,7 @@ public class IssueServiceImpl implements IssueService {
     @Override
     public void changeStatus(Long id, String status, LocalDateTime expectedUpdatedAt, Long actorId) {
         IssueDetailResponseDTO before = getIssueDetail(id);
+        requireManagePermission(before, actorId);
         int affected = issueMapper.updateStatus(id, status, actorId, expectedUpdatedAt);
         if (affected == 0) {
             throw new IssueConflictException(id);
@@ -219,6 +223,7 @@ public class IssueServiceImpl implements IssueService {
     @Override
     public void closeIssue(Long id, LocalDateTime expectedUpdatedAt, Long actorId) {
         IssueDetailResponseDTO before = getIssueDetail(id);
+        requireManagePermission(before, actorId);
         int affected = issueMapper.closeIssue(id, actorId, expectedUpdatedAt);
         if (affected == 0) {
             throw new IssueConflictException(id);
@@ -229,6 +234,7 @@ public class IssueServiceImpl implements IssueService {
     @Override
     public void reopenIssue(Long id, LocalDateTime expectedUpdatedAt, Long actorId) {
         IssueDetailResponseDTO before = getIssueDetail(id);
+        requireManagePermission(before, actorId);
         int affected = issueMapper.reopenIssue(id, actorId, expectedUpdatedAt);
         if (affected == 0) {
             throw new IssueConflictException(id);
@@ -274,6 +280,39 @@ public class IssueServiceImpl implements IssueService {
         history.setRelatedRecordId(relatedRecordId);
         history.setActorId(actorId);
         issueHistoryMapper.insertHistory(history);
+    }
+
+    /**
+     * 오류 등록자 또는 현재 처리 담당자만 본문 수정/상태변경/종료/재오픈을 할 수 있다(2026-09-14 팀 결정).
+     * 담당자 재지정은 requireAssigneeChangePermission()의 별도 규칙(미지정 예외)을 따른다.
+     */
+    private void requireManagePermission(IssueDetailResponseDTO issue, Long actorId) {
+        if (!canManage(issue, actorId)) {
+            throw new IssueForbiddenException(issue.getId());
+        }
+    }
+
+    private boolean canManage(IssueDetailResponseDTO issue, Long actorId) {
+        return actorId != null
+                && (actorId.equals(issue.getCreatedBy()) || actorId.equals(issue.getAssigneeId()));
+    }
+
+    /**
+     * 담당자 재지정은 기본적으로 등록자/현재 담당자만 가능하지만, 아직 담당자가 없는(미지정) 오류는
+     * 예외적으로 누구나 "자기 자신"을 담당자로 지정할 수 있다 - 등록자·담당자가 둘 다 자리를 비우면
+     * 새 오류가 영원히 미지정으로 남는 걸 막기 위한 안전장치(2026-09-14 팀 결정).
+     */
+    private void requireAssigneeChangePermission(IssueDetailResponseDTO issue, Long actorId, Long newAssigneeId) {
+        if (actorId == null) {
+            throw new IssueForbiddenException(issue.getId());
+        }
+        if (canManage(issue, actorId)) {
+            return;
+        }
+        if (issue.getAssigneeId() == null && actorId.equals(newAssigneeId)) {
+            return;
+        }
+        throw new IssueForbiddenException(issue.getId());
     }
 
     private void recordFieldChange(Long issueId, String fieldName, String oldValue, String newValue, Long actorId) {

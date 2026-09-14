@@ -20,8 +20,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import egovframework.common.SessionKeys;
+import egovframework.issue.dto.IssueDetailResponseDTO;
 import egovframework.issue.dto.request.IssueSaveRequestDTO;
 import egovframework.issue.exception.IssueConflictException;
+import egovframework.issue.exception.IssueForbiddenException;
 import egovframework.issue.gubun.IssuePriority;
 import egovframework.issue.gubun.IssueSeverity;
 import egovframework.issue.gubun.IssueStatus;
@@ -56,23 +58,38 @@ public class IssueViewController {
     private ProjectService projectService;
 
     @RequestMapping(method = RequestMethod.GET)
-    public String detail(@PathVariable Long id, @RequestParam(required = false) String conflict, Model model) {
-        model.addAttribute("issue", issueService.getIssueDetail(id));
+    public String detail(@PathVariable Long id, @RequestParam(required = false) String conflict,
+            @RequestParam(required = false) String forbidden, Model model, HttpSession session) {
+        IssueDetailResponseDTO issue = issueService.getIssueDetail(id);
+        Long actorId = currentUserId(session);
+        model.addAttribute("issue", issue);
         model.addAttribute("histories", issueService.getHistories(id));
         model.addAttribute("comments", issueCommentService.getComments(id));
         model.addAttribute("users", userMapper.selectAllForOptions());
         model.addAttribute("statusOptions", Arrays.asList(IssueStatus.NEW, IssueStatus.REVIEWING, IssueStatus.FIXING));
         model.addAttribute("conflict", conflict != null);
+        model.addAttribute("forbidden", forbidden != null);
+        // 오류 등록자/처리 담당자만 본문 수정·상태변경·종료·재오픈이 가능(2026-09-14 팀 결정) - 그 외에는
+        // 관련 버튼/폼 자체를 화면에서 숨긴다. canClaimAssignee는 담당자가 아직 없는(미지정) 오류에 한해
+        // 누구나 자기 자신을 담당자로 지정할 수 있는 예외(IssueServiceImpl.requireAssigneeChangePermission 참고).
+        boolean canManage = canManage(issue, actorId);
+        model.addAttribute("canManage", canManage);
+        model.addAttribute("canClaimAssignee", canManage || issue.getAssigneeId() == null);
         return "issue/detail";
     }
 
     /** 오류수정_화면명세서.md - 등록 폼과 동일 레이아웃, 기존 값이 채워진 별도 페이지. */
     @RequestMapping(value = "/edit", method = RequestMethod.GET)
     public String editForm(@PathVariable Long id, Model model, HttpSession session) {
-        if (currentUserId(session) == null) {
+        Long actorId = currentUserId(session);
+        if (actorId == null) {
             return "redirect:/login";
         }
-        model.addAttribute("issue", issueService.getIssueDetail(id));
+        IssueDetailResponseDTO issue = issueService.getIssueDetail(id);
+        if (!canManage(issue, actorId)) {
+            return "redirect:/issues/" + id + "?forbidden=true";
+        }
+        model.addAttribute("issue", issue);
         model.addAttribute("projects", projectService.getProjectList());
         model.addAttribute("severityOptions", Arrays.asList(IssueSeverity.values()));
         model.addAttribute("priorityOptions", Arrays.asList(IssuePriority.values()));
@@ -181,14 +198,25 @@ public class IssueViewController {
         Files.copy(filePath, response.getOutputStream());
     }
 
-    /** 낙관적 잠금 충돌(IssueConflictException) 시 화면을 깨뜨리는 대신 안내 문구와 함께 상세로 되돌아간다. */
+    /**
+     * 낙관적 잠금 충돌(IssueConflictException)이나 권한 없음(IssueForbiddenException) 시
+     * 화면을 깨뜨리는 대신 안내 문구와 함께 상세로 되돌아간다.
+     */
     private String withConflictHandling(Long id, ThrowingRunnable action) throws IOException {
         try {
             action.run();
         } catch (IssueConflictException e) {
             return "redirect:/issues/" + id + "?conflict=true";
+        } catch (IssueForbiddenException e) {
+            return "redirect:/issues/" + id + "?forbidden=true";
         }
         return "redirect:/issues/" + id;
+    }
+
+    /** 오류 등록자 또는 현재 처리 담당자인지 - IssueServiceImpl.canManage()와 동일 규칙(간단해서 중복 허용). */
+    private boolean canManage(IssueDetailResponseDTO issue, Long actorId) {
+        return actorId != null
+                && (actorId.equals(issue.getCreatedBy()) || actorId.equals(issue.getAssigneeId()));
     }
 
     /** updateIssueFields()가 IOException(체크 예외)을 던지므로 Runnable 대신 이걸 쓴다. */
