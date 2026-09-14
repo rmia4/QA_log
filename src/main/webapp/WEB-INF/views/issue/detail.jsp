@@ -116,6 +116,9 @@
   .log-toggle { font-family:inherit; font-size:12px; color:var(--accent); background:none; border:none; padding:0 0 0 6px; cursor:pointer; }
   .log-toggle:hover { text-decoration:underline; }
   .log-group-items { margin-top:8px; padding-left:14px; border-left:2px solid var(--border); display:flex; flex-direction:column; gap:6px; }
+  /* display:flex가 브라우저 기본 [hidden]{display:none} 규칙과 동일 명시도라 author 스타일이 이겨서
+     hidden 속성을 줘도 계속 보이던 문제 - 더 명시적인 선택자로 강제 숨김 */
+  .log-group-items[hidden] { display:none; }
   .log-subitem { display:flex; justify-content:space-between; gap:10px; font-size:12.5px; color:var(--ink-muted); }
   .log-subitem .log-text { color:var(--ink-muted); }
   .log-subitem .log-text b { color:var(--ink); }
