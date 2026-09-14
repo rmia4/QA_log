@@ -52,8 +52,12 @@ public class IssueController {
     }
 
     @RequestMapping(value = "/issues/{id}", method = RequestMethod.PUT)
-    public void updateFields(@PathVariable Long id, @RequestBody IssueSaveRequestDTO request, HttpSession session) {
-        issueService.updateIssueFields(id, request, currentUserId(session));
+    public void updateFields(@PathVariable Long id, @RequestBody IssueSaveRequestDTO request, HttpSession session)
+            throws IOException {
+        // 첨부 추가/삭제는 이 JSON API 범위 밖(multipart를 안 받음) - 브라우저 수정 화면(IssueViewController)
+        // 전용 기능이라 전부 null로 넘긴다. expectedUpdatedAt은 Jackson이 JSON 바디에서 그대로 역직렬화하므로
+        // 뷰 컨트롤러처럼 String 우회 파싱이 필요 없다(오류수정_기능명세서.md 4절).
+        issueService.updateIssueFields(id, request, null, null, null, null, request.getExpectedUpdatedAt(), currentUserId(session));
     }
 
     @RequestMapping(value = "/issues/{id}/assignee", method = RequestMethod.PUT)
