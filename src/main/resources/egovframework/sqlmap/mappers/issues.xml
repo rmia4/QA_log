@@ -7,6 +7,15 @@
         <result column="issue_number"  property="issueNumber" />
         <result column="project_id"    property="projectId" />
         <result column="title"         property="title" />
+        <result column="location"      property="location" />
+        <result column="location_url"  property="locationUrl" />
+        <result column="description"   property="description" />
+        <result column="steps_to_reproduce" property="stepsToReproduce" />
+        <result column="expected_result" property="expectedResult" />
+        <result column="actual_result" property="actualResult" />
+        <result column="test_version"  property="testVersion" />
+        <result column="test_environment" property="testEnvironment" />
+        <result column="suggested_fix" property="suggestedFix" />
         <result column="status"        property="status" />
         <result column="severity"      property="severity" />
         <result column="priority"      property="priority" />
@@ -16,7 +25,10 @@
     </resultMap>
 
     <select id="selectIssueList" resultMap="issueListResultMap">
-        SELECT i.id, i.issue_number, i.project_id, i.title, i.status, i.severity, i.priority,
+        SELECT i.id, i.issue_number, i.project_id, i.title, i.location, i.location_url,
+               i.description, i.steps_to_reproduce, i.expected_result, i.actual_result,
+               i.test_version, i.test_environment, i.suggested_fix,
+               i.status, i.severity, i.priority,
                u.display_name AS assignee_name, i.created_at, i.updated_at
         FROM issues i
         LEFT JOIN users u ON u.id = i.assignee_id
