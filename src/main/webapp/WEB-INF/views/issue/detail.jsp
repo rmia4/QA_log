@@ -113,6 +113,12 @@
   .log-text { font-size:13px; color:var(--ink-muted); }
   .log-text b { color:var(--ink); font-weight:600; }
   .log-time { font-family:"JetBrains Mono",monospace; font-size:11.5px; color:var(--ink-faint); white-space:nowrap; }
+  .log-toggle { font-family:inherit; font-size:12px; color:var(--accent); background:none; border:none; padding:0 0 0 6px; cursor:pointer; }
+  .log-toggle:hover { text-decoration:underline; }
+  .log-group-items { margin-top:8px; padding-left:14px; border-left:2px solid var(--border); display:flex; flex-direction:column; gap:6px; }
+  .log-subitem { display:flex; justify-content:space-between; gap:10px; font-size:12.5px; color:var(--ink-muted); }
+  .log-subitem .log-text { color:var(--ink-muted); }
+  .log-subitem .log-text b { color:var(--ink); }
 
   .comment-list { display:flex; flex-direction:column; gap:12px; margin-bottom:16px; }
   .comment-card { display:flex; gap:10px; }
@@ -357,22 +363,56 @@
 
       <div class="tab-panel" id="panelHistory" hidden>
         <div class="log-list">
-          <c:forEach var="h" items="${histories}">
-            <div class="log-row">
-              <span class="log-dot"></span>
-              <span class="log-text">
-                <c:choose>
-                  <c:when test="${h.eventType == 'created'}"><b>${fn:escapeXml(h.actorName)}</b>님이 오류를 등록했습니다</c:when>
-                  <c:when test="${h.eventType == 'attachment_added'}"><b>${fn:escapeXml(h.actorName)}</b>님이 스크린샷을 첨부했습니다</c:when>
-                  <c:when test="${h.eventType == 'attachment_removed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 첨부파일을 삭제했습니다</c:when>
-                  <c:when test="${h.eventType == 'field_changed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 ${fn:escapeXml(h.fieldLabel)}${h.fieldJosaEul} ${fn:escapeXml(h.oldValueDisplay)} → ${fn:escapeXml(h.newValueDisplay)}${h.newValueJosaRo} 변경</c:when>
-                  <c:otherwise>${fn:escapeXml(h.eventType)}</c:otherwise>
-                </c:choose>
-              </span>
-              <span class="log-time mono">${h.createdAtDisplay}</span>
-            </div>
+          <c:forEach var="g" items="${historyGroups}">
+            <c:choose>
+              <%-- 한 번의 저장 요청으로 항목이 하나뿐이면 지금까지처럼 그 문장을 그대로 보여준다. --%>
+              <c:when test="${g.count == 1}">
+                <c:set var="h" value="${g.single}" />
+                <div class="log-row">
+                  <span class="log-dot"></span>
+                  <span class="log-text">
+                    <c:choose>
+                      <c:when test="${h.eventType == 'created'}"><b>${fn:escapeXml(h.actorName)}</b>님이 오류를 등록했습니다</c:when>
+                      <c:when test="${h.eventType == 'attachment_added'}"><b>${fn:escapeXml(h.actorName)}</b>님이 스크린샷을 첨부했습니다</c:when>
+                      <c:when test="${h.eventType == 'attachment_removed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 첨부파일을 삭제했습니다</c:when>
+                      <c:when test="${h.eventType == 'field_changed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 ${fn:escapeXml(h.fieldLabel)}${h.fieldJosaEul} ${fn:escapeXml(h.oldValueDisplay)} → ${fn:escapeXml(h.newValueDisplay)}${h.newValueJosaRo} 변경</c:when>
+                      <c:otherwise>${fn:escapeXml(h.eventType)}</c:otherwise>
+                    </c:choose>
+                  </span>
+                  <span class="log-time mono">${h.createdAtDisplay}</span>
+                </div>
+              </c:when>
+              <%-- 항목이 여러 개면 "변경 N건" 요약 한 줄 + 기본 접힌 펼치기 목록으로 묶는다
+                   (등록/수정 시 필드 여러 개 + 첨부 추가/삭제가 한꺼번에 남는 걸 깔끔하게 보여주기 위함,
+                   2026-09-14 팀 결정). 세부 항목의 문구 조립 규칙은 위 단일 항목 분기와 동일하다. --%>
+              <c:otherwise>
+                <div class="log-row">
+                  <span class="log-dot"></span>
+                  <span class="log-text">
+                    <b>${fn:escapeXml(g.actorName)}</b>님이 오류를 수정했습니다
+                    <button type="button" class="log-toggle" data-label="변경 ${g.count}건 보기" onclick="toggleLogGroup(this)">변경 ${g.count}건 보기</button>
+                    <div class="log-group-items" hidden>
+                      <c:forEach var="h" items="${g.items}">
+                        <div class="log-subitem">
+                          <span class="log-text">
+                            <c:choose>
+                              <c:when test="${h.eventType == 'attachment_added'}"><b>${fn:escapeXml(h.actorName)}</b>님이 스크린샷을 첨부했습니다</c:when>
+                              <c:when test="${h.eventType == 'attachment_removed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 첨부파일을 삭제했습니다</c:when>
+                              <c:when test="${h.eventType == 'field_changed'}"><b>${fn:escapeXml(h.actorName)}</b>님이 ${fn:escapeXml(h.fieldLabel)}${h.fieldJosaEul} ${fn:escapeXml(h.oldValueDisplay)} → ${fn:escapeXml(h.newValueDisplay)}${h.newValueJosaRo} 변경</c:when>
+                              <c:otherwise>${fn:escapeXml(h.eventType)}</c:otherwise>
+                            </c:choose>
+                          </span>
+                          <span class="log-time mono">${h.createdAtDisplay}</span>
+                        </div>
+                      </c:forEach>
+                    </div>
+                  </span>
+                  <span class="log-time mono">${g.createdAtDisplay}</span>
+                </div>
+              </c:otherwise>
+            </c:choose>
           </c:forEach>
-          <c:if test="${empty histories}"><p class="empty">아직 이력이 없습니다.</p></c:if>
+          <c:if test="${empty historyGroups}"><p class="empty">아직 이력이 없습니다.</p></c:if>
         </div>
       </div>
 
@@ -407,6 +447,14 @@
       document.getElementById('panelComments').hidden = isHistory;
       document.getElementById('tabBtnHistory').classList.toggle('active', isHistory);
       document.getElementById('tabBtnComments').classList.toggle('active', !isHistory);
+    }
+
+    /** 변경 이력에서 "변경 N건 보기" 클릭 시 세부 항목을 펼치고/접는다(기본은 접힌 상태). */
+    function toggleLogGroup(button) {
+      var items = button.nextElementSibling;
+      var willShow = items.hidden;
+      items.hidden = !willShow;
+      button.textContent = willShow ? '접기' : button.dataset.label;
     }
   </script>
 </body>

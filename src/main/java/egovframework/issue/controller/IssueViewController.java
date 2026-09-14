@@ -4,8 +4,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -21,6 +24,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import egovframework.common.SessionKeys;
 import egovframework.issue.dto.IssueDetailResponseDTO;
+import egovframework.issue.dto.IssueHistoryGroupDTO;
+import egovframework.issue.dto.IssueHistoryResponseDTO;
 import egovframework.issue.dto.request.IssueSaveRequestDTO;
 import egovframework.issue.exception.IssueConflictException;
 import egovframework.issue.exception.IssueForbiddenException;
@@ -62,8 +67,10 @@ public class IssueViewController {
             @RequestParam(required = false) String forbidden, Model model, HttpSession session) {
         IssueDetailResponseDTO issue = issueService.getIssueDetail(id);
         Long actorId = currentUserId(session);
+        List<IssueHistoryResponseDTO> histories = issueService.getHistories(id);
         model.addAttribute("issue", issue);
-        model.addAttribute("histories", issueService.getHistories(id));
+        model.addAttribute("histories", histories);
+        model.addAttribute("historyGroups", groupHistories(histories));
         model.addAttribute("comments", issueCommentService.getComments(id));
         model.addAttribute("users", userMapper.selectAllForOptions());
         model.addAttribute("statusOptions", Arrays.asList(IssueStatus.NEW, IssueStatus.REVIEWING, IssueStatus.FIXING));
@@ -196,6 +203,28 @@ public class IssueViewController {
         response.setContentType(attachment.getMimeType());
         response.setHeader("Content-Disposition", "inline");
         Files.copy(filePath, response.getOutputStream());
+    }
+
+    /**
+     * 변경 이력 탭에서 같은 change_group_id(한 번의 저장 요청)로 남은 여러 행을 하나로 묶는다 -
+     * 오류 등록/수정 시 필드 여러 개 + 첨부 추가/삭제가 한꺼번에 이력에 남아 화면이 너무 번잡해지는
+     * 문제 때문(2026-09-14 팀 결정). histories는 이미 created_at ASC로 정렬돼 있고, 한 저장 요청의
+     * 여러 행은 항상 연속으로 insert되므로 change_group_id 등장 순서 = 시간 순서가 그대로 유지된다.
+     */
+    private List<IssueHistoryGroupDTO> groupHistories(List<IssueHistoryResponseDTO> histories) {
+        Map<String, IssueHistoryGroupDTO> groups = new LinkedHashMap<>();
+        for (IssueHistoryResponseDTO h : histories) {
+            IssueHistoryGroupDTO group = groups.get(h.getChangeGroupId());
+            if (group == null) {
+                group = new IssueHistoryGroupDTO();
+                group.setActorName(h.getActorName());
+                group.setCreatedAtDisplay(h.getCreatedAtDisplay());
+                group.setItems(new ArrayList<>());
+                groups.put(h.getChangeGroupId(), group);
+            }
+            group.getItems().add(h);
+        }
+        return new ArrayList<>(groups.values());
     }
 
     /**
