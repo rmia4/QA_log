@@ -109,6 +109,18 @@ public class MainControllerTest {
     }
 
     @Test
+    public void requestedPriorityDescendingSortIsKeptInModel() throws Exception {
+        mockMvc.perform(get("/")
+                .param("projectId", "22")
+                .param("sort", "priority")
+                .param("direction", "desc")
+                .session(loggedInSession()))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("sort", "priority"))
+                .andExpect(model().attribute("direction", "desc"));
+    }
+
+    @Test
     public void requestedCreatedDateAscendingSortIsKeptInModel() throws Exception {
         mockMvc.perform(get("/")
                 .param("projectId", "22")

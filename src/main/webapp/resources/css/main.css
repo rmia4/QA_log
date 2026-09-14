@@ -252,15 +252,16 @@ a { color: inherit; text-decoration: none; }
 .issue-table tbody tr:hover { background: #fbfcff; }
 .issue-table th:nth-child(1), .issue-table td:nth-child(1) { width: 90px; }
 .issue-table th:nth-child(3), .issue-table td:nth-child(3),
-.issue-table th:nth-child(4), .issue-table td:nth-child(4) { width: 105px; }
-.issue-table th:nth-child(5), .issue-table td:nth-child(5) { width: 120px; }
-.issue-table th:nth-child(6), .issue-table td:nth-child(6) { width: 170px; }
+.issue-table th:nth-child(4), .issue-table td:nth-child(4),
+.issue-table th:nth-child(5), .issue-table td:nth-child(5) { width: 105px; }
+.issue-table th:nth-child(6), .issue-table td:nth-child(6) { width: 120px; }
+.issue-table th:nth-child(7), .issue-table td:nth-child(7) { width: 170px; }
 .issue-number { color: var(--ink-500) !important; font-variant-numeric: tabular-nums; }
 .issue-title a { display: block; overflow: hidden; color: var(--ink-900); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .issue-title a:hover { color: var(--blue-600); }
 .updated-at { color: var(--ink-500) !important; font-size: 12px !important; }
 
-.status, .severity { display: inline-flex; padding: 5px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+.status, .severity, .priority { display: inline-flex; padding: 5px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; }
 .status-new { color: #1559c7; background: #e9f1ff; }
 .status-reviewing { color: #8a5b00; background: #fff4ce; }
 .status-fixing { color: #8146ad; background: #f4eaff; }
@@ -269,6 +270,11 @@ a { color: inherit; text-decoration: none; }
 .severity-medium { color: #8a5b00; background: #fff4ce; }
 .severity-high { color: #b14949; background: #fff0f0; }
 .severity-critical { color: #fff; background: #c93d3d; }
+.priority { color: #697289; background: #f0f2f6; }
+.priority-low { color: #42705a; background: #e8f4ed; }
+.priority-normal { color: #1559c7; background: #e9f1ff; }
+.priority-high { color: #9a6200; background: #fff0c7; }
+.priority-urgent { color: #fff; background: #d96832; }
 
 .project-empty, .issue-empty, .workspace-empty { color: var(--ink-500); text-align: center; }
 .project-empty { padding: 45px 12px; border: 1px dashed #d8deea; border-radius: 12px; font-size: 13px; }
