@@ -155,6 +155,12 @@
                                     <c:param name="sort" value="severity" />
                                     <c:param name="direction" value="${sort == 'severity' && direction == 'desc' ? 'asc' : 'desc'}" />
                                 </c:url>
+                                <c:url var="prioritySortUrl" value="/">
+                                    <c:param name="projectId" value="${selectedProjectId}" />
+                                    <c:param name="view" value="${listMode}" />
+                                    <c:param name="sort" value="priority" />
+                                    <c:param name="direction" value="${sort == 'priority' && direction == 'desc' ? 'asc' : 'desc'}" />
+                                </c:url>
                                 <c:url var="createdAtSortUrl" value="/">
                                     <c:param name="projectId" value="${selectedProjectId}" />
                                     <c:param name="view" value="${listMode}" />
@@ -163,6 +169,9 @@
                                 </c:url>
                                 <a class="sort-button ${sort == 'severity' ? 'is-active' : ''}" href="${severitySortUrl}">
                                     심각도 <span aria-hidden="true">${sort == 'severity' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
+                                </a>
+                                <a class="sort-button ${sort == 'priority' ? 'is-active' : ''}" href="${prioritySortUrl}">
+                                    우선순위 <span aria-hidden="true">${sort == 'priority' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
                                 </a>
                                 <a class="sort-button ${sort == 'createdAt' ? 'is-active' : ''}" href="${createdAtSortUrl}">
                                     추가 날짜 <span aria-hidden="true">${sort == 'createdAt' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
@@ -180,6 +189,7 @@
                                     <th>오류 제목</th>
                                     <th>상태</th>
                                     <th>심각도</th>
+                                    <th>우선순위</th>
                                     <th>담당자</th>
                                     <th>등록일</th>
                                 </tr>
@@ -211,6 +221,17 @@
                                                     <c:when test="${issue.severity == 'medium'}">보통</c:when>
                                                     <c:when test="${issue.severity == 'high'}">높음</c:when>
                                                     <c:when test="${issue.severity == 'critical'}">치명적</c:when>
+                                                    <c:otherwise>미지정</c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="priority priority-${issue.priority}">
+                                                <c:choose>
+                                                    <c:when test="${issue.priority == 'low'}">낮음</c:when>
+                                                    <c:when test="${issue.priority == 'normal'}">보통</c:when>
+                                                    <c:when test="${issue.priority == 'high'}">높음</c:when>
+                                                    <c:when test="${issue.priority == 'urgent'}">긴급</c:when>
                                                     <c:otherwise>미지정</c:otherwise>
                                                 </c:choose>
                                             </span>
