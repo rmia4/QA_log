@@ -5,9 +5,9 @@ import java.util.List;
 
 public enum ProjectStatus {
 
-    WORKING("working", "작업중"),
     IN_PROGRESS("in_progress", "진행중"),
     MAINTENANCE("maintenance", "유지보수중"),
+    ON_HOLD("on_hold", "보류"),
     ARCHIVED("archived", "보관");
 
     private final String code;
@@ -31,7 +31,7 @@ public enum ProjectStatus {
     }
 
     public static List<ProjectStatus> activeValues() {
-        return Arrays.asList(WORKING, IN_PROGRESS, MAINTENANCE);
+        return Arrays.asList(IN_PROGRESS, MAINTENANCE, ON_HOLD);
     }
 
     public static ProjectStatus fromCode(String code) {

@@ -84,7 +84,29 @@ a { color: inherit; text-decoration: none; }
 .eyebrow, .breadcrumb { margin: 0; color: var(--blue-600); font-size: 11px; font-weight: 800; letter-spacing: .12em; }
 .panel-heading h1 { margin: 7px 0 0; font-size: 22px; letter-spacing: -.04em; }
 .project-total { min-width: 27px; padding: 5px 8px; color: var(--ink-500); background: #f1f3f7; border-radius: 999px; font-size: 12px; text-align: center; }
-.project-list { display: grid; gap: 7px; }
+.project-list { display: grid; gap: 10px; }
+.project-group { min-width: 0; }
+.project-group-heading {
+    padding: 7px 9px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--ink-700);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    list-style: none;
+}
+.project-group-heading::-webkit-details-marker { display: none; }
+.project-group-heading::after { content: '⌄'; color: var(--ink-500); font-size: 15px; transition: transform .15s ease; }
+.project-group:not([open]) .project-group-heading::after { transform: rotate(-90deg); }
+.project-group-heading:hover { background: #f3f5f9; }
+.project-group-in_progress .project-group-heading { color: #8a5b00; }
+.project-group-maintenance .project-group-heading { color: #8146ad; }
+.project-group-on_hold .project-group-heading { color: #1559c7; }
+.project-group-archived .project-group-heading { color: #697289; }
+.project-group-items { padding-top: 3px; display: grid; gap: 7px; }
 
 .project-item {
     min-width: 0;
@@ -104,11 +126,6 @@ a { color: inherit; text-decoration: none; }
 .project-copy { min-width: 0; display: grid; gap: 4px; }
 .project-copy strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .project-copy small { display: flex; align-items: center; gap: 6px; color: var(--ink-500); font-size: 12px; }
-.project-status { padding: 2px 6px; border-radius: 999px; font-size: 10px; font-weight: 800; }
-.project-status-working { color: #1559c7; background: #e9f1ff; }
-.project-status-in_progress { color: #8a5b00; background: #fff4ce; }
-.project-status-maintenance { color: #8146ad; background: #f4eaff; }
-.project-status-archived { color: #697289; background: #eceff4; }
 .project-count { min-width: 24px; color: var(--ink-500); font-size: 12px; text-align: right; }
 .project-item.is-selected .project-count { color: var(--blue-700); font-weight: 800; }
 
@@ -280,7 +297,8 @@ a { color: inherit; text-decoration: none; }
     .workspace { display: block; }
     .project-panel { padding: 18px 14px; border-right: 0; border-bottom: 1px solid var(--line); }
     .panel-heading { padding-bottom: 13px; }
-    .project-list { display: flex; overflow-x: auto; }
+    .project-list { display: grid; }
+    .project-group-items { display: flex; overflow-x: auto; }
     .project-item { min-width: 210px; }
     .issue-panel { padding: 25px 16px; }
     .issue-heading h2 { font-size: 24px; }

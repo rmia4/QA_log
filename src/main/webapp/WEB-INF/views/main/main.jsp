@@ -41,27 +41,33 @@
             </div>
 
             <nav class="project-list">
-                <c:forEach var="project" items="${projects}">
-                    <c:url var="projectUrl" value="/">
-                        <c:param name="projectId" value="${project.id}" />
-                        <c:param name="view" value="${listMode}" />
-                        <c:param name="sort" value="${sort}" />
-                        <c:param name="direction" value="${direction}" />
-                    </c:url>
-                    <a class="project-item ${project.id == selectedProjectId ? 'is-selected' : ''}"
-                       href="${projectUrl}" ${project.id == selectedProjectId ? 'aria-current="page"' : ''}>
-                        <span class="project-icon" aria-hidden="true"><c:out value="${fn:substring(project.name, 0, 1)}" /></span>
-                        <span class="project-copy">
-                            <strong><c:out value="${project.name}" /></strong>
-                            <small>
-                                <span class="project-status project-status-${project.status}">
-                                    <c:out value="${project.statusLabel}" />
-                                </span>
-                                <span>미종료 오류 ${project.openIssueCount}건</span>
-                            </small>
-                        </span>
-                        <span class="project-count">${project.openIssueCount}</span>
-                    </a>
+                <c:forEach var="projectStatus" items="${projectListStatuses}">
+                    <details class="project-group project-group-${projectStatus.code}" open>
+                        <summary class="project-group-heading">
+                            (<c:out value="${projectStatus.label}" />)
+                        </summary>
+                        <div class="project-group-items">
+                            <c:forEach var="project" items="${projects}">
+                                <c:if test="${project.status == projectStatus.code}">
+                                    <c:url var="projectUrl" value="/">
+                                        <c:param name="projectId" value="${project.id}" />
+                                        <c:param name="view" value="${listMode}" />
+                                        <c:param name="sort" value="${sort}" />
+                                        <c:param name="direction" value="${direction}" />
+                                    </c:url>
+                                    <a class="project-item ${project.id == selectedProjectId ? 'is-selected' : ''}"
+                                       href="${projectUrl}" ${project.id == selectedProjectId ? 'aria-current="page"' : ''}>
+                                        <span class="project-icon" aria-hidden="true"><c:out value="${fn:substring(project.name, 0, 1)}" /></span>
+                                        <span class="project-copy">
+                                            <strong><c:out value="${project.name}" /></strong>
+                                            <small>미종료 오류 ${project.openIssueCount}건</small>
+                                        </span>
+                                        <span class="project-count">${project.openIssueCount}</span>
+                                    </a>
+                                </c:if>
+                            </c:forEach>
+                        </div>
+                    </details>
                 </c:forEach>
             </nav>
 
@@ -233,7 +239,7 @@
             <label class="field-label field-label-spaced" for="createProjectStatus">프로젝트 상태</label>
             <select id="createProjectStatus" class="text-input" name="status">
                 <c:forEach var="statusOption" items="${projectStatusOptions}">
-                    <option value="${statusOption.code}" ${statusOption.code == 'working' ? 'selected' : ''}>
+                    <option value="${statusOption.code}">
                         <c:out value="${statusOption.label}" />
                     </option>
                 </c:forEach>

@@ -30,11 +30,11 @@ CREATE TABLE team_settings (
 CREATE TABLE projects (
     id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name        VARCHAR(200)    NOT NULL,
-    status      VARCHAR(20)     NOT NULL DEFAULT 'working',
+    status      VARCHAR(20)     NOT NULL DEFAULT 'in_progress',
     created_by  BIGINT          NOT NULL REFERENCES users (id),
     created_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT ck_projects_status CHECK (status IN ('working', 'in_progress', 'maintenance', 'archived'))
+    CONSTRAINT ck_projects_status CHECK (status IN ('in_progress', 'maintenance', 'on_hold', 'archived'))
 );
 
 CREATE TABLE issues (

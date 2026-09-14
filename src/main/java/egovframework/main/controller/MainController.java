@@ -37,6 +37,7 @@ public class MainController {
 
         List<ProjectVO> projects = projectService.getProjectList();
         model.addAttribute("projects", projects);
+        model.addAttribute("projectListStatuses", java.util.Arrays.asList(ProjectStatus.values()));
         model.addAttribute("projectStatusOptions", ProjectStatus.activeValues());
         String listMode = "closed".equals(view) ? "closed" : "active";
         String sortMode = "createdAt".equals(sort) ? "createdAt" : "severity";

@@ -35,6 +35,13 @@ public class ProjectServiceImplTest {
         assertEquals("maintenance", created.getStatus());
     }
 
+    @Test
+    public void blankStatusDefaultsNewProjectToInProgress() {
+        ProjectVO created = projectService.createProject("새 프로젝트", "", 7L);
+
+        assertEquals("in_progress", created.getStatus());
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void archivedStatusCannotBeSelectedDuringCreate() {
         projectService.createProject("새 프로젝트", "archived", 7L);
@@ -63,7 +70,7 @@ public class ProjectServiceImplTest {
         projectMapper.openIssueCount = 1;
 
         assertFalse(projectService.archiveProject(22L));
-        assertEquals("working", projectMapper.project.getStatus());
+        assertEquals("on_hold", projectMapper.project.getStatus());
     }
 
     @Test
@@ -81,7 +88,7 @@ public class ProjectServiceImplTest {
         private RecordingProjectMapper() {
             project.setId(22L);
             project.setName("기존 프로젝트");
-            project.setStatus("working");
+            project.setStatus("on_hold");
         }
 
         @Override

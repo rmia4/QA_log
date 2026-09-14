@@ -17,7 +17,13 @@
             p.id, p.name, p.status, p.created_by, p.created_at, p.updated_at,
             (SELECT COUNT(*) FROM issues i WHERE i.project_id = p.id AND i.status != 'closed') AS open_issue_count
         FROM projects p
-        ORDER BY p.created_at DESC
+        ORDER BY CASE p.status
+            WHEN 'in_progress' THEN 1
+            WHEN 'maintenance' THEN 2
+            WHEN 'on_hold' THEN 3
+            WHEN 'archived' THEN 4
+            ELSE 5
+        END, p.created_at DESC
     </select>
 
     <select id="selectProject" parameterType="long" resultMap="projectResultMap">

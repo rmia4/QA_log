@@ -62,7 +62,7 @@ public class ProjectServiceImpl implements ProjectService {
     private String normalizeActiveStatus(String status, boolean useDefault) {
         String normalized = status == null ? "" : status.trim();
         if (normalized.isEmpty()) {
-            return useDefault ? ProjectStatus.WORKING.getCode() : null;
+            return useDefault ? ProjectStatus.IN_PROGRESS.getCode() : null;
         }
         ProjectStatus projectStatus = ProjectStatus.fromCode(normalized);
         if (projectStatus == null || projectStatus.isArchived()) {

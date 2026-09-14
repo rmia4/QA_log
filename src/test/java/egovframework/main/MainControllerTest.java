@@ -118,7 +118,16 @@ public class MainControllerTest {
         mockMvc.perform(get("/").session(loggedInSession()))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("projectStatusOptions", asList(
-                        ProjectStatus.WORKING, ProjectStatus.IN_PROGRESS, ProjectStatus.MAINTENANCE)));
+                        ProjectStatus.IN_PROGRESS, ProjectStatus.MAINTENANCE, ProjectStatus.ON_HOLD)));
+    }
+
+    @Test
+    public void projectListReceivesAllStatusesInDisplayOrder() throws Exception {
+        mockMvc.perform(get("/").session(loggedInSession()))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("projectListStatuses", asList(
+                        ProjectStatus.IN_PROGRESS, ProjectStatus.MAINTENANCE,
+                        ProjectStatus.ON_HOLD, ProjectStatus.ARCHIVED)));
     }
 
     private MockHttpSession loggedInSession() {
