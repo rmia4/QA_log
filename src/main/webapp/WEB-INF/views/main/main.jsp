@@ -200,7 +200,7 @@
                                         <td class="issue-number">#${empty issue.issueNumber ? issue.id : issue.issueNumber}</td>
                                         <td class="issue-title">
                                             <a href="<c:url value='/issues/${issue.id}' />">
-                                                <c:out value="${empty issue.title ? '제목 없음' : issue.title}" />
+                                                <span><c:out value="${empty issue.title ? '제목 없음' : issue.title}" /></span>
                                             </a>
                                         </td>
                                         <td>
