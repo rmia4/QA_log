@@ -124,7 +124,7 @@
                     </div>
 
                     <div class="issue-toolbar">
-                        <div class="tabs" role="tablist" aria-label="오류 상태 구분">
+                        <div id="issueStatusTabs" class="tabs" role="tablist" aria-label="오류 상태 구분">
                             <c:url var="activeUrl" value="/">
                                 <c:param name="projectId" value="${selectedProjectId}" />
                                 <c:param name="view" value="active" />
@@ -138,9 +138,9 @@
                                 <c:param name="direction" value="${direction}" />
                             </c:url>
                             <a href="${activeUrl}" class="tab ${listMode == 'active' ? 'is-active' : ''}" role="tab"
-                               aria-selected="${listMode == 'active'}">진행 중</a>
+                               aria-selected="${listMode == 'active'}" data-issue-list-control>진행 중</a>
                             <a href="${closedUrl}" class="tab ${listMode == 'closed' ? 'is-active' : ''}" role="tab"
-                               aria-selected="${listMode == 'closed'}">종료됨</a>
+                               aria-selected="${listMode == 'closed'}" data-issue-list-control>종료됨</a>
                         </div>
                         <div class="issue-toolbar-meta">
                             <label class="search-box issue-search-box">
@@ -148,7 +148,7 @@
                                 <input id="issueSearchInput" class="search-input" type="search"
                                        placeholder="오류 검색" autocomplete="off" aria-label="오류 검색">
                             </label>
-                            <div class="sort-controls" aria-label="오류 목록 정렬">
+                            <div id="issueSortControls" class="sort-controls" aria-label="오류 목록 정렬">
                                 <c:url var="severitySortUrl" value="/">
                                     <c:param name="projectId" value="${selectedProjectId}" />
                                     <c:param name="view" value="${listMode}" />
@@ -167,21 +167,30 @@
                                     <c:param name="sort" value="createdAt" />
                                     <c:param name="direction" value="${sort == 'createdAt' && direction == 'desc' ? 'asc' : 'desc'}" />
                                 </c:url>
-                                <a class="sort-button ${sort == 'severity' ? 'is-active' : ''}" href="${severitySortUrl}">
+                                <c:url var="updatedAtSortUrl" value="/">
+                                    <c:param name="projectId" value="${selectedProjectId}" />
+                                    <c:param name="view" value="${listMode}" />
+                                    <c:param name="sort" value="updatedAt" />
+                                    <c:param name="direction" value="${sort == 'updatedAt' && direction == 'desc' ? 'asc' : 'desc'}" />
+                                </c:url>
+                                <a class="sort-button ${sort == 'severity' ? 'is-active' : ''}" href="${severitySortUrl}" data-issue-list-control>
                                     심각도 <span aria-hidden="true">${sort == 'severity' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
                                 </a>
-                                <a class="sort-button ${sort == 'priority' ? 'is-active' : ''}" href="${prioritySortUrl}">
+                                <a class="sort-button ${sort == 'priority' ? 'is-active' : ''}" href="${prioritySortUrl}" data-issue-list-control>
                                     우선순위 <span aria-hidden="true">${sort == 'priority' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
                                 </a>
-                                <a class="sort-button ${sort == 'createdAt' ? 'is-active' : ''}" href="${createdAtSortUrl}">
-                                    추가 날짜 <span aria-hidden="true">${sort == 'createdAt' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
+                                <a class="sort-button ${sort == 'createdAt' ? 'is-active' : ''}" href="${createdAtSortUrl}" data-issue-list-control>
+                                    등록일 <span aria-hidden="true">${sort == 'createdAt' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
+                                </a>
+                                <a class="sort-button ${sort == 'updatedAt' ? 'is-active' : ''}" href="${updatedAtSortUrl}" data-issue-list-control>
+                                    수정일 <span aria-hidden="true">${sort == 'updatedAt' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
                                 </a>
                             </div>
                             <span id="issueResultCount" class="result-count">총 ${fn:length(issues)}건</span>
                         </div>
                     </div>
 
-                    <div class="issue-table-wrap">
+                    <div id="issueTableWrap" class="issue-table-wrap">
                         <table class="issue-table">
                             <thead>
                                 <tr>
@@ -192,18 +201,27 @@
                                     <th>우선순위</th>
                                     <th>담당자</th>
                                     <th>등록일</th>
+                                    <th>수정일</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <c:forEach var="issue" items="${issues}">
+                                <c:url var="issueDetailUrl" value="/issues/${issue.id}"/>
                                     <tr class="issue-row" data-search-text="${fn:escapeXml(issue.searchText)}">
-                                        <td class="issue-number">#${empty issue.issueNumber ? issue.id : issue.issueNumber}</td>
-                                        <td class="issue-title">
-                                            <a href="<c:url value='/issues/${issue.id}' />">
+                                        <td class="issue-number issue-link-cell">
+                                        	<a href="${issueDetailUrl }">
+	                                        #${empty issue.issueNumber ? issue.id : issue.issueNumber}
+	                                        </a>
+                                        </td>
+                                       
+                                        <td class="issue-title issue-link-cell">
+                                            <a href="${issueDetailUrl }">
                                                 <span><c:out value="${empty issue.title ? '제목 없음' : issue.title}" /></span>
                                             </a>
                                         </td>
-                                        <td>
+                                        <td class="issue-status issue-link-cell">
+                       						 <a href="${issueDetailUrl }">
+                                        
                                             <span class="status status-${issue.status}">
                                                 <c:choose>
                                                     <c:when test="${issue.status == 'new'}">신규</c:when>
@@ -213,6 +231,7 @@
                                                     <c:otherwise><c:out value="${issue.status}" /></c:otherwise>
                                                 </c:choose>
                                             </span>
+                                            </a>
                                         </td>
                                         <td>
                                             <span class="severity severity-${issue.severity}">
@@ -238,6 +257,7 @@
                                         </td>
                                         <td><c:out value="${empty issue.assigneeName ? '미지정' : issue.assigneeName}" /></td>
                                         <td class="updated-at"><c:out value="${issue.createdAtDisplay}" /></td>
+                                        <td class="updated-at"><c:out value="${issue.updatedAtDisplay}" /></td>
                                     </tr>
                                 </c:forEach>
                             </tbody>
@@ -255,6 +275,8 @@
                             </div>
                         </c:if>
                     </div>
+
+                    <nav id="issuePagination" class="issue-pagination" aria-label="오류 목록 페이지"></nav>
                 </c:when>
                 <c:otherwise>
                     <div class="workspace-empty">
@@ -451,25 +473,177 @@
             });
 
             var issueSearchInput = document.getElementById('issueSearchInput');
-            var issueRows = document.querySelectorAll('.issue-row');
-            var issueResultCount = document.getElementById('issueResultCount');
-            var issueSearchEmpty = document.getElementById('issueSearchEmpty');
+            var issueListRequestNumber = 0;
+
+            var issuePageSize = 10;
+
+            function getPageFromUrl() {
+                var page = parseInt(new URL(window.location.href).searchParams.get('page'), 10);
+                return isNaN(page) || page < 1 ? 1 : page;
+            }
+
+            function updatePageUrl(page, historyMethod) {
+                if (!historyMethod) {
+                    return;
+                }
+
+                var url = new URL(window.location.href);
+                if (page > 1) {
+                    url.searchParams.set('page', page);
+                } else {
+                    url.searchParams.delete('page');
+                }
+                window.history[historyMethod + 'State']({ issueListView: true }, '', url.href);
+            }
+
+            function createPageButton(label, page, disabled, active) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'page-button' + (active ? ' is-active' : '');
+                button.textContent = label;
+                button.disabled = disabled;
+                if (active) {
+                    button.setAttribute('aria-current', 'page');
+                }
+                button.addEventListener('click', function () {
+                    showIssuePage(page, 'push');
+                });
+                return button;
+            }
+
+            function renderIssuePagination(currentPage, totalPages) {
+                var pagination = document.getElementById('issuePagination');
+                if (!pagination) {
+                    return;
+                }
+
+                pagination.innerHTML = '';
+                if (totalPages <= 1) {
+                    return;
+                }
+
+                pagination.appendChild(createPageButton('이전', currentPage - 1, currentPage === 1, false));
+                for (var page = 1; page <= totalPages; page++) {
+                    pagination.appendChild(createPageButton(String(page), page, false, page === currentPage));
+                }
+                pagination.appendChild(createPageButton('다음', currentPage + 1, currentPage === totalPages, false));
+            }
+
+            function showIssuePage(requestedPage, historyMethod) {
+                var issueRows = document.querySelectorAll('.issue-row');
+                var issueResultCount = document.getElementById('issueResultCount');
+                var issueSearchEmpty = document.getElementById('issueSearchEmpty');
+                var keyword = issueSearchInput ? issueSearchInput.value.trim().toLowerCase() : '';
+                var matchingRows = [];
+
+                Array.prototype.forEach.call(issueRows, function (row) {
+                    var searchText = (row.getAttribute('data-search-text') || '').toLowerCase();
+                    if (searchText.indexOf(keyword) !== -1) {
+                        matchingRows.push(row);
+                    }
+                    row.hidden = true;
+                });
+
+                var totalPages = Math.max(1, Math.ceil(matchingRows.length / issuePageSize));
+                var currentPage = Math.min(Math.max(requestedPage, 1), totalPages);
+                var startIndex = (currentPage - 1) * issuePageSize;
+                var endIndex = Math.min(startIndex + issuePageSize, matchingRows.length);
+                for (var index = startIndex; index < endIndex; index++) {
+                    matchingRows[index].hidden = false;
+                }
+
+                if (issueResultCount) {
+                    issueResultCount.textContent = '총 ' + matchingRows.length + '건';
+                }
+                if (issueSearchEmpty) {
+                    issueSearchEmpty.hidden = keyword === '' || matchingRows.length !== 0 || issueRows.length === 0;
+                }
+
+                renderIssuePagination(currentPage, matchingRows.length === 0 ? 1 : totalPages);
+                updatePageUrl(currentPage, historyMethod);
+            }
+
+            function replaceIssueList(responseHtml, targetUrl, addHistory, requestNumber) {
+                if (requestNumber !== issueListRequestNumber) {
+                    return;
+                }
+
+                var nextDocument = new DOMParser().parseFromString(responseHtml, 'text/html');
+                var currentTabs = document.getElementById('issueStatusTabs');
+                var currentSortControls = document.getElementById('issueSortControls');
+                var currentResultCount = document.getElementById('issueResultCount');
+                var currentTableWrap = document.getElementById('issueTableWrap');
+                var nextTabs = nextDocument.getElementById('issueStatusTabs');
+                var nextSortControls = nextDocument.getElementById('issueSortControls');
+                var nextResultCount = nextDocument.getElementById('issueResultCount');
+                var nextTableWrap = nextDocument.getElementById('issueTableWrap');
+
+                if (!currentTabs || !currentSortControls || !currentResultCount || !currentTableWrap
+                        || !nextTabs || !nextSortControls || !nextResultCount || !nextTableWrap) {
+                    throw new Error('오류 목록 영역을 찾을 수 없습니다.');
+                }
+
+                currentTabs.innerHTML = nextTabs.innerHTML;
+                currentSortControls.innerHTML = nextSortControls.innerHTML;
+                currentResultCount.textContent = nextResultCount.textContent;
+                currentTableWrap.innerHTML = nextTableWrap.innerHTML;
+                currentTableWrap.removeAttribute('aria-busy');
+
+                if (addHistory) {
+                    window.history.pushState({ issueListView: true }, '', targetUrl);
+                }
+                showIssuePage(getPageFromUrl(), null);
+            }
+
+            function loadIssueList(targetUrl, addHistory) {
+                var requestNumber = ++issueListRequestNumber;
+                var tableWrap = document.getElementById('issueTableWrap');
+                if (tableWrap) {
+                    tableWrap.setAttribute('aria-busy', 'true');
+                }
+
+                window.fetch(targetUrl, {
+                    credentials: 'same-origin',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                }).then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('오류 목록을 불러오지 못했습니다.');
+                    }
+                    return response.text();
+                }).then(function (responseHtml) {
+                    replaceIssueList(responseHtml, targetUrl, addHistory, requestNumber);
+                }).catch(function () {
+                    if (requestNumber === issueListRequestNumber) {
+                        window.location.assign(targetUrl);
+                    }
+                });
+            }
+
             if (issueSearchInput) {
                 issueSearchInput.addEventListener('input', function () {
-                    var keyword = issueSearchInput.value.trim().toLowerCase();
-                    var visibleIssueCount = 0;
+                    showIssuePage(1, 'replace');
+                });
 
-                    Array.prototype.forEach.call(issueRows, function (row) {
-                        var searchText = row.getAttribute('data-search-text').toLowerCase();
-                        var matches = searchText.indexOf(keyword) !== -1;
-                        row.hidden = !matches;
-                        if (matches) {
-                            visibleIssueCount++;
-                        }
-                    });
+                window.history.replaceState({ issueListView: true }, '', window.location.href);
+                showIssuePage(getPageFromUrl(), 'replace');
+                document.addEventListener('click', function (event) {
+                    var target = event.target instanceof Element ? event.target : event.target.parentElement;
+                    var link = target ? target.closest('a[data-issue-list-control]') : null;
+                    if (!link || event.defaultPrevented || event.button !== 0
+                            || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                        return;
+                    }
 
-                    issueResultCount.textContent = '총 ' + visibleIssueCount + '건';
-                    issueSearchEmpty.hidden = keyword === '' || visibleIssueCount !== 0 || issueRows.length === 0;
+                    event.preventDefault();
+                    loadIssueList(link.href, true);
+                });
+
+                window.addEventListener('popstate', function (event) {
+                    if (event.state && event.state.issueListView) {
+                        loadIssueList(window.location.href, false);
+                    } else {
+                        window.location.reload();
+                    }
                 });
             }
         }());

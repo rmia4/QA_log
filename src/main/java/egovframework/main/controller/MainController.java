@@ -67,7 +67,8 @@ public class MainController {
         model.addAttribute("projectStatusOptions", ProjectStatus.activeValues());
         String listMode = "closed".equals(view) ? "closed" : "active";
         String sortMode = "createdAt".equals(sort) ? "createdAt"
-                : ("priority".equals(sort) ? "priority" : "severity");
+                : ("updatedAt".equals(sort) ? "updatedAt"
+                : ("priority".equals(sort) ? "priority" : "severity"));
         String sortDirection = "asc".equals(direction) ? "asc" : "desc";
         model.addAttribute("listMode", listMode);
         model.addAttribute("sort", sortMode);
