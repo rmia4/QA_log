@@ -78,7 +78,7 @@ public class IssueServiceImpl implements IssueService {
         issue.setCreatedBy(actorId);
         issue.setUpdatedBy(actorId);
 
-        // issue_number는 DB 트리거(trg_issues_set_issue_number)가 id와 동일하게 채운다.
+        // issue_number는 DB 트리거(trg_issues_set_issue_number)가 선택한 프로젝트 안의 다음 번호로 채운다.
         issueMapper.insertIssue(issue);
 
         String changeGroupId = UUID.randomUUID().toString();
