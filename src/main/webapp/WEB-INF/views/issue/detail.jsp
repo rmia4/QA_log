@@ -66,7 +66,7 @@
   .meta-item .k { font-size:10.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; }
   .meta-item .v { font-size:13.5px; color:var(--ink); font-weight:600; }
   .meta-item .v .mono { color:var(--ink-faint); font-weight:500; }
-  .assignee-form { display:flex; align-items:center; gap:8px; background:var(--accent-soft); border-radius:10px; padding:6px 10px; }
+  .assignee-form { display:flex; align-items:flex-end; gap:8px; background:var(--accent-soft); border-radius:10px; padding:6px 10px; }
   .meta-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
 
   select, input[type=text] { font-family:inherit; font-size:12.5px; padding:6px 8px; border-radius:6px; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink); }
@@ -107,9 +107,9 @@
 
   .log-list { display:flex; flex-direction:column; }
   .log-row { display:grid; grid-template-columns:18px 1fr auto; gap:10px; align-items:start; padding:9px 0; position:relative; }
-  .log-row::before { content:""; position:absolute; left:8px; top:22px; bottom:-9px; width:1px; background:var(--border); }
+  .log-row::before { content:""; position:absolute; left:8.5px; top:22px; bottom:-9px; width:1px; background:var(--border); }
   .log-row:last-child::before { display:none; }
-  .log-dot { width:9px; height:9px; border-radius:50%; background:var(--border-strong); margin-top:5px; }
+  .log-dot { width:9px; height:9px; border-radius:50%; background:var(--border-strong); margin-top:5px; justify-self:center; }
   .log-text { font-size:13px; color:var(--ink-muted); }
   .log-text b { color:var(--ink); font-weight:600; }
   .log-time { font-family:"JetBrains Mono",monospace; font-size:11.5px; color:var(--ink-faint); white-space:nowrap; }
