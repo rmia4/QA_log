@@ -1,6 +1,7 @@
 package egovframework.issue.controller;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.servlet.http.HttpSession;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import egovframework.common.SessionKeys;
 import egovframework.issue.dto.IssueDetailResponseDTO;
 import egovframework.issue.dto.IssueHistoryResponseDTO;
+import egovframework.issue.dto.IssueInlineChangeResponseDTO;
 import egovframework.issue.dto.request.IssueAssigneeChangeRequestDTO;
 import egovframework.issue.dto.request.IssueConcurrencyRequestDTO;
 import egovframework.issue.dto.request.IssueSaveRequestDTO;
@@ -60,6 +62,35 @@ public class IssueController {
         issueService.updateIssueFields(id, request, null, null, null, null, request.getExpectedUpdatedAt(), currentUserId(session));
     }
 
+    @RequestMapping(value = "/issues/{id}/severity", method = RequestMethod.POST)
+    public IssueInlineChangeResponseDTO changeSeverityInline(@PathVariable Long id,
+            @RequestParam String severity, @RequestParam String expectedUpdatedAt, HttpSession session) {
+        return issueService.changeSeverity(
+                id, severity, parseUpdatedAt(expectedUpdatedAt), currentUserId(session));
+    }
+
+    @RequestMapping(value = "/issues/{id}/priority", method = RequestMethod.POST)
+    public IssueInlineChangeResponseDTO changePriorityInline(@PathVariable Long id,
+            @RequestParam String priority, @RequestParam String expectedUpdatedAt, HttpSession session) {
+        return issueService.changePriority(
+                id, priority, parseUpdatedAt(expectedUpdatedAt), currentUserId(session));
+    }
+
+    @RequestMapping(value = "/issues/{id}/status", method = RequestMethod.POST)
+    public IssueInlineChangeResponseDTO changeStatusInline(@PathVariable Long id,
+            @RequestParam String status, @RequestParam String expectedUpdatedAt, HttpSession session) {
+        return issueService.changeStatus(
+                id, status, parseUpdatedAt(expectedUpdatedAt), currentUserId(session));
+    }
+
+    @RequestMapping(value = "/issues/{id}/assignee", method = RequestMethod.POST)
+    public IssueInlineChangeResponseDTO changeAssigneeInline(@PathVariable Long id,
+            @RequestParam(required = false) Long assigneeId,
+            @RequestParam String expectedUpdatedAt, HttpSession session) {
+        return issueService.changeAssignee(
+                id, assigneeId, parseUpdatedAt(expectedUpdatedAt), currentUserId(session));
+    }
+
     @RequestMapping(value = "/issues/{id}/assignee", method = RequestMethod.PUT)
     public void changeAssignee(@PathVariable Long id, @RequestBody IssueAssigneeChangeRequestDTO request,
             HttpSession session) {
@@ -92,6 +123,10 @@ public class IssueController {
      * 동기 쪽 로그인 처리에서 성공 시 session.setAttribute(SessionKeys.LOGIN_USER_ID, userId)로
      * 맞춰주면 이 메서드가 바로 동작한다.
      */
+    private LocalDateTime parseUpdatedAt(String value) {
+        return LocalDateTime.parse(value);
+    }
+
     private Long currentUserId(HttpSession session) {
         return (Long) session.getAttribute(SessionKeys.LOGIN_USER_ID);
     }

@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import egovframework.issue.dto.IssueDetailResponseDTO;
 import egovframework.issue.dto.IssueHistoryResponseDTO;
+import egovframework.issue.dto.IssueInlineChangeResponseDTO;
 import egovframework.issue.dto.request.IssueSaveRequestDTO;
 
 public interface IssueService {
@@ -34,9 +35,19 @@ public interface IssueService {
             List<MultipartFile> files, List<MultipartFile> expectedResultFiles, List<MultipartFile> actualResultFiles,
             List<Long> attachmentIdsToDelete, LocalDateTime expectedUpdatedAt, Long actorId) throws IOException;
 
-    void changeAssignee(Long id, Long assigneeId, LocalDateTime expectedUpdatedAt, Long actorId);
+    IssueInlineChangeResponseDTO changeSeverity(
+            Long id, String severity, LocalDateTime expectedUpdatedAt, Long actorId);
 
-    void changeStatus(Long id, String status, LocalDateTime expectedUpdatedAt, Long actorId);
+    IssueInlineChangeResponseDTO changePriority(
+            Long id, String priority, LocalDateTime expectedUpdatedAt, Long actorId);
+
+    IssueInlineChangeResponseDTO changeAssignee(
+            Long id, Long assigneeId, LocalDateTime expectedUpdatedAt, Long actorId);
+
+    IssueInlineChangeResponseDTO changeStatus(
+            Long id, String status, LocalDateTime expectedUpdatedAt, Long actorId);
+
+    boolean canManageIssue(Long id, Long actorId);
 
     void closeIssue(Long id, LocalDateTime expectedUpdatedAt, Long actorId);
 

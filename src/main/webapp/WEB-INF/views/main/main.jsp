@@ -207,57 +207,106 @@
                             <tbody>
                                 <c:forEach var="issue" items="${issues}">
                                 <c:url var="issueDetailUrl" value="/issues/${issue.id}"/>
-                                    <tr class="issue-row" data-search-text="${fn:escapeXml(issue.searchText)}">
+                                <c:set var="canManageIssue" value="${canEditProject || issue.createdBy == loginUserId || issue.assigneeId == loginUserId}" />
+                                <c:set var="canClaimIssue" value="${!canManageIssue && empty issue.assigneeId}" />
+                                    <tr class="issue-row" data-search-text="${fn:escapeXml(issue.searchText)}"
+                                        data-issue-id="${issue.id}" data-updated-at="${issue.updatedAt}">
                                         <td class="issue-number issue-link-cell">
-                                        	<a href="${issueDetailUrl }">
-	                                        #${empty issue.issueNumber ? issue.id : issue.issueNumber}
-	                                        </a>
+                                            <a href="${issueDetailUrl}">#${empty issue.issueNumber ? issue.id : issue.issueNumber}</a>
                                         </td>
-                                       
                                         <td class="issue-title issue-link-cell">
-                                            <a href="${issueDetailUrl }">
+                                            <a href="${issueDetailUrl}">
                                                 <span><c:out value="${empty issue.title ? '제목 없음' : issue.title}" /></span>
                                             </a>
                                         </td>
-                                        <td class="issue-status issue-link-cell">
-                       						 <a href="${issueDetailUrl }">
-                                        
-                                            <span class="status status-${issue.status}">
-                                                <c:choose>
-                                                    <c:when test="${issue.status == 'new'}">신규</c:when>
-                                                    <c:when test="${issue.status == 'reviewing'}">확인 중</c:when>
-                                                    <c:when test="${issue.status == 'fixing'}">수정 중</c:when>
-                                                    <c:when test="${issue.status == 'closed'}">종료</c:when>
-                                                    <c:otherwise><c:out value="${issue.status}" /></c:otherwise>
-                                                </c:choose>
-                                            </span>
-                                            </a>
+                                        <td class="${canManageIssue ? '' : 'issue-link-cell'}">
+                                            <c:choose>
+                                                <c:when test="${canManageIssue}">
+                                                    <select class="inline-issue-select status status-${issue.status}"
+                                                            data-inline-issue-field="status" data-current-value="${issue.status}"
+                                                            aria-label="${issue.title} 상태 변경">
+                                                        <c:forEach var="option" items="${issueStatusOptions}">
+                                                            <option value="${option.code}" ${option.code == issue.status ? 'selected' : ''}>
+                                                                <c:out value="${option.label}" />
+                                                            </option>
+                                                        </c:forEach>
+                                                    </select>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <a href="${issueDetailUrl}">
+                                                        <span class="status status-${issue.status}">
+                                                            <c:out value="${issue.status == 'new' ? '신규' : issue.status == 'reviewing' ? '확인 중' : issue.status == 'fixing' ? '수정 중' : '종료'}" />
+                                                        </span>
+                                                    </a>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </td>
                                         <td>
-                                            <span class="severity severity-${issue.severity}">
-                                                <c:choose>
-                                                    <c:when test="${issue.severity == 'low'}">낮음</c:when>
-                                                    <c:when test="${issue.severity == 'medium'}">보통</c:when>
-                                                    <c:when test="${issue.severity == 'high'}">높음</c:when>
-                                                    <c:when test="${issue.severity == 'critical'}">치명적</c:when>
-                                                    <c:otherwise>미지정</c:otherwise>
-                                                </c:choose>
-                                            </span>
+                                            <c:choose>
+                                                <c:when test="${canManageIssue}">
+                                                    <select class="inline-issue-select severity severity-${issue.severity}"
+                                                            data-inline-issue-field="severity" data-current-value="${issue.severity}"
+                                                            aria-label="${issue.title} 심각도 변경">
+                                                        <c:forEach var="option" items="${issueSeverityOptions}">
+                                                            <option value="${option.code}" ${option.code == issue.severity ? 'selected' : ''}>
+                                                                <c:out value="${option.label}" />
+                                                            </option>
+                                                        </c:forEach>
+                                                    </select>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="severity severity-${issue.severity}">
+                                                        <c:out value="${issue.severity == 'low' ? '낮음' : issue.severity == 'medium' ? '보통' : issue.severity == 'high' ? '높음' : issue.severity == 'critical' ? '치명적' : '미지정'}" />
+                                                    </span>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </td>
                                         <td>
-                                            <span class="priority priority-${issue.priority}">
-                                                <c:choose>
-                                                    <c:when test="${issue.priority == 'low'}">낮음</c:when>
-                                                    <c:when test="${issue.priority == 'normal'}">보통</c:when>
-                                                    <c:when test="${issue.priority == 'high'}">높음</c:when>
-                                                    <c:when test="${issue.priority == 'urgent'}">긴급</c:when>
-                                                    <c:otherwise>미지정</c:otherwise>
-                                                </c:choose>
-                                            </span>
+                                            <c:choose>
+                                                <c:when test="${canManageIssue}">
+                                                    <select class="inline-issue-select priority priority-${issue.priority}"
+                                                            data-inline-issue-field="priority" data-current-value="${issue.priority}"
+                                                            aria-label="${issue.title} 우선순위 변경">
+                                                        <c:forEach var="option" items="${issuePriorityOptions}">
+                                                            <option value="${option.code}" ${option.code == issue.priority ? 'selected' : ''}>
+                                                                <c:out value="${option.label}" />
+                                                            </option>
+                                                        </c:forEach>
+                                                    </select>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="priority priority-${issue.priority}">
+                                                        <c:out value="${issue.priority == 'low' ? '낮음' : issue.priority == 'normal' ? '보통' : issue.priority == 'high' ? '높음' : issue.priority == 'urgent' ? '긴급' : '미지정'}" />
+                                                    </span>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </td>
-                                        <td><c:out value="${empty issue.assigneeName ? '미지정' : issue.assigneeName}" /></td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${canManageIssue || canClaimIssue}">
+                                                    <select class="inline-issue-select assignee-inline-select"
+                                                            data-inline-issue-field="assignee" data-current-value="${issue.assigneeId}"
+                                                            aria-label="${issue.title} 담당자 변경">
+                                                        <option value="" ${empty issue.assigneeId ? 'selected' : ''}>미지정</option>
+                                                        <c:choose>
+                                                            <c:when test="${canManageIssue}">
+                                                                <c:forEach var="user" items="${users}">
+                                                                    <option value="${user.id}" ${user.id == issue.assigneeId ? 'selected' : ''}>
+                                                                        <c:out value="${user.displayName}" />
+                                                                    </option>
+                                                                </c:forEach>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <option value="${loginUserId}"><c:out value="${sessionScope.loginDisplayName}" /></option>
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                    </select>
+                                                </c:when>
+                                                <c:otherwise><c:out value="${empty issue.assigneeName ? '미지정' : issue.assigneeName}" /></c:otherwise>
+                                            </c:choose>
+                                        </td>
                                         <td class="updated-at"><c:out value="${issue.createdAtDisplay}" /></td>
-                                        <td class="updated-at"><c:out value="${issue.updatedAtDisplay}" /></td>
+                                        <td class="updated-at issue-updated-at"><c:out value="${issue.updatedAtDisplay}" /></td>
                                     </tr>
                                 </c:forEach>
                             </tbody>
@@ -618,6 +667,86 @@
                     }
                 });
             }
+
+            var issueApiBaseUrl = '<c:url value="/api/issues" />';
+
+            function updateInlineSelectClass(select, field, value) {
+                if (field === 'assignee') {
+                    return;
+                }
+                var prefix = field + '-';
+                Array.prototype.slice.call(select.classList).forEach(function (className) {
+                    if (className.indexOf(prefix) === 0) {
+                        select.classList.remove(className);
+                    }
+                });
+                select.classList.add(prefix + (value || 'unspecified'));
+            }
+
+            function inlineChangeErrorMessage(status) {
+                if (status === 409) {
+                    return '다른 사용자가 먼저 수정했습니다. 화면을 새로고침한 뒤 다시 시도하세요.';
+                }
+                if (status === 403) {
+                    return '이 오류를 수정할 권한이 없습니다.';
+                }
+                if (status === 400) {
+                    return '선택한 값을 저장할 수 없습니다.';
+                }
+                return '변경사항을 저장하지 못했습니다.';
+            }
+
+            document.addEventListener('change', function (event) {
+                var select = event.target instanceof Element
+                        ? event.target.closest('select[data-inline-issue-field]') : null;
+                if (!select) {
+                    return;
+                }
+
+                var row = select.closest('tr[data-issue-id]');
+                var field = select.getAttribute('data-inline-issue-field');
+                var previousValue = select.getAttribute('data-current-value') || '';
+                var nextValue = select.value;
+                if (!row || nextValue === previousValue) {
+                    return;
+                }
+
+                var parameterName = field === 'assignee' ? 'assigneeId' : field;
+                var body = encodeURIComponent(parameterName) + '=' + encodeURIComponent(nextValue)
+                        + '&expectedUpdatedAt=' + encodeURIComponent(row.getAttribute('data-updated-at'));
+                select.disabled = true;
+
+                window.fetch(issueApiBaseUrl + '/' + row.getAttribute('data-issue-id') + '/' + field, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: body
+                }).then(function (response) {
+                    if (!response.ok) {
+                        var error = new Error(inlineChangeErrorMessage(response.status));
+                        error.status = response.status;
+                        throw error;
+                    }
+                    return response.json();
+                }).then(function (result) {
+                    select.setAttribute('data-current-value', result.value || '');
+                    updateInlineSelectClass(select, field, result.value);
+                    row.setAttribute('data-updated-at', result.updatedAt);
+                    var updatedAtCell = row.querySelector('.issue-updated-at');
+                    if (updatedAtCell) {
+                        updatedAtCell.textContent = result.updatedAtDisplay;
+                    }
+                }).catch(function (error) {
+                    select.value = previousValue;
+                    updateInlineSelectClass(select, field, previousValue);
+                    window.alert(error.message || inlineChangeErrorMessage(error.status));
+                }).then(function () {
+                    select.disabled = false;
+                });
+            });
 
             if (issueSearchInput) {
                 issueSearchInput.addEventListener('input', function () {

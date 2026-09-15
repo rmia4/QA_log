@@ -25,6 +25,7 @@ import egovframework.common.SessionKeys;
 import egovframework.issue.controller.IssueRegisterViewController;
 import egovframework.issue.dto.IssueDetailResponseDTO;
 import egovframework.issue.dto.IssueHistoryResponseDTO;
+import egovframework.issue.dto.IssueInlineChangeResponseDTO;
 import egovframework.issue.dto.request.IssueSaveRequestDTO;
 import egovframework.issue.service.IssueService;
 import egovframework.project.service.ProjectService;
@@ -144,8 +145,11 @@ public class IssueRegisterViewControllerTest {
                 List<Long> attachmentIdsToDelete, LocalDateTime expectedUpdatedAt, Long actorId) throws IOException {
             throw new UnsupportedOperationException();
         }
-        @Override public void changeAssignee(Long id, Long assigneeId, LocalDateTime expectedUpdatedAt, Long actorId) { throw new UnsupportedOperationException(); }
-        @Override public void changeStatus(Long id, String status, LocalDateTime expectedUpdatedAt, Long actorId) { throw new UnsupportedOperationException(); }
+        @Override public IssueInlineChangeResponseDTO changeSeverity(Long id, String severity, LocalDateTime expectedUpdatedAt, Long actorId) { throw new UnsupportedOperationException(); }
+        @Override public IssueInlineChangeResponseDTO changePriority(Long id, String priority, LocalDateTime expectedUpdatedAt, Long actorId) { throw new UnsupportedOperationException(); }
+        @Override public IssueInlineChangeResponseDTO changeAssignee(Long id, Long assigneeId, LocalDateTime expectedUpdatedAt, Long actorId) { throw new UnsupportedOperationException(); }
+        @Override public IssueInlineChangeResponseDTO changeStatus(Long id, String status, LocalDateTime expectedUpdatedAt, Long actorId) { throw new UnsupportedOperationException(); }
+        @Override public boolean canManageIssue(Long id, Long actorId) { return true; }
         @Override public void closeIssue(Long id, LocalDateTime expectedUpdatedAt, Long actorId) { throw new UnsupportedOperationException(); }
         @Override public void reopenIssue(Long id, LocalDateTime expectedUpdatedAt, Long actorId) { throw new UnsupportedOperationException(); }
         @Override public List<IssueHistoryResponseDTO> getHistories(Long id) { throw new UnsupportedOperationException(); }

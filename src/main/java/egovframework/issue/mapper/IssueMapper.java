@@ -30,6 +30,12 @@ public interface IssueMapper {
      */
     int updateIssueFields(@Param("issue") IssueVO issue, @Param("expectedUpdatedAt") LocalDateTime expectedUpdatedAt);
 
+    int updateSeverity(@Param("id") Long id, @Param("severity") String severity,
+            @Param("updatedBy") Long updatedBy, @Param("expectedUpdatedAt") LocalDateTime expectedUpdatedAt);
+
+    int updatePriority(@Param("id") Long id, @Param("priority") String priority,
+            @Param("updatedBy") Long updatedBy, @Param("expectedUpdatedAt") LocalDateTime expectedUpdatedAt);
+
     int updateAssignee(@Param("id") Long id, @Param("assigneeId") Long assigneeId,
             @Param("updatedBy") Long updatedBy, @Param("expectedUpdatedAt") LocalDateTime expectedUpdatedAt);
 
@@ -41,4 +47,6 @@ public interface IssueMapper {
 
     int reopenIssue(@Param("id") Long id, @Param("updatedBy") Long updatedBy,
             @Param("expectedUpdatedAt") LocalDateTime expectedUpdatedAt);
+
+    LocalDateTime selectIssueUpdatedAt(Long id);
 }

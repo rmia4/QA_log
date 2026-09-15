@@ -19,7 +19,9 @@
         <result column="status"        property="status" />
         <result column="severity"      property="severity" />
         <result column="priority"      property="priority" />
+        <result column="assignee_id"   property="assigneeId" />
         <result column="assignee_name" property="assigneeName" />
+        <result column="created_by"    property="createdBy" />
         <result column="created_at"    property="createdAt" />
         <result column="updated_at"    property="updatedAt" />
     </resultMap>
@@ -28,7 +30,7 @@
         SELECT i.id, i.issue_number, i.project_id, i.title, i.location, i.location_url,
                i.description, i.steps_to_reproduce, i.expected_result, i.actual_result,
                i.test_version, i.test_environment, i.suggested_fix,
-               i.status, i.severity, i.priority,
+               i.status, i.severity, i.priority, i.assignee_id, i.created_by,
                u.display_name AS assignee_name, i.created_at, i.updated_at
         FROM issues i
         LEFT JOIN users u ON u.id = i.assignee_id
@@ -153,13 +155,28 @@
         WHERE id = #{issue.id} AND updated_at = #{expectedUpdatedAt}
     </update>
 
+    <update id="updateSeverity">
+        UPDATE issues SET severity = #{severity}, updated_by = #{updatedBy}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND updated_at = #{expectedUpdatedAt}
+    </update>
+
+    <update id="updatePriority">
+        UPDATE issues SET priority = #{priority}, updated_by = #{updatedBy}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND updated_at = #{expectedUpdatedAt}
+    </update>
+
     <update id="updateAssignee">
         UPDATE issues SET assignee_id = #{assigneeId}, updated_by = #{updatedBy}, updated_at = CURRENT_TIMESTAMP
         WHERE id = #{id} AND updated_at = #{expectedUpdatedAt}
     </update>
 
     <update id="updateStatus">
-        UPDATE issues SET status = #{status}, updated_by = #{updatedBy}, updated_at = CURRENT_TIMESTAMP
+        UPDATE issues SET
+            status = #{status},
+            closed_by = CASE WHEN #{status} = 'closed' THEN #{updatedBy} ELSE NULL END,
+            closed_at = CASE WHEN #{status} = 'closed' THEN CURRENT_TIMESTAMP ELSE NULL END,
+            updated_by = #{updatedBy},
+            updated_at = CURRENT_TIMESTAMP
         WHERE id = #{id} AND updated_at = #{expectedUpdatedAt}
     </update>
 
@@ -174,6 +191,10 @@
             updated_by = #{updatedBy}, updated_at = CURRENT_TIMESTAMP
         WHERE id = #{id} AND updated_at = #{expectedUpdatedAt}
     </update>
+
+    <select id="selectIssueUpdatedAt" parameterType="long" resultType="java.time.LocalDateTime">
+        SELECT updated_at FROM issues WHERE id = #{id}
+    </select>
 
     <select id="selectProjectId" parameterType="long" resultType="long">
         SELECT project_id
