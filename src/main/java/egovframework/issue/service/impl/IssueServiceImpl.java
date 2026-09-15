@@ -14,7 +14,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import egovframework.issue.dto.IssueDetailResponseDTO;
 import egovframework.issue.dto.IssueHistoryResponseDTO;
+import egovframework.issue.dto.IssueInlineChangeResponseDTO;
 import egovframework.issue.dto.request.IssueSaveRequestDTO;
+import egovframework.issue.exception.InvalidIssueValueException;
 import egovframework.issue.exception.IssueConflictException;
 import egovframework.issue.exception.IssueForbiddenException;
 import egovframework.issue.exception.IssueNotFoundException;
@@ -30,6 +32,7 @@ import egovframework.issue.service.IssueService;
 import egovframework.issue.service.StoredAttachment;
 import egovframework.issue.vo.IssueAttachmentVO;
 import egovframework.issue.vo.IssueHistoryVO;
+import egovframework.project.mapper.ProjectMapper;
 import egovframework.issue.vo.IssueVO;
 import egovframework.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +47,7 @@ public class IssueServiceImpl implements IssueService {
     private final IssueAttachmentMapper issueAttachmentMapper;
     private final AttachmentStorageService attachmentStorageService;
     private final UserMapper userMapper;
+    private final ProjectMapper projectMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -198,26 +202,58 @@ public class IssueServiceImpl implements IssueService {
     }
 
     @Override
-    public void changeAssignee(Long id, Long assigneeId, LocalDateTime expectedUpdatedAt, Long actorId) {
+    public IssueInlineChangeResponseDTO changeSeverity(
+            Long id, String severity, LocalDateTime expectedUpdatedAt, Long actorId) {
+        requireValidValue("심각도", severity, IssueSeverity.isValid(severity));
         IssueDetailResponseDTO before = getIssueDetail(id);
-        requireAssigneeChangePermission(before, actorId, assigneeId);
-        int affected = issueMapper.updateAssignee(id, assigneeId, actorId, expectedUpdatedAt);
-        if (affected == 0) {
-            throw new IssueConflictException(id);
-        }
-        String newAssigneeName = assigneeId == null ? "미지정" : userMapper.selectDisplayName(assigneeId);
-        recordFieldChange(id, "assignee_id", nullToUnspecified(before.getAssigneeName()), newAssigneeName, actorId);
+        requireManagePermission(before, actorId);
+        requireUpdated(id, issueMapper.updateSeverity(id, severity, actorId, expectedUpdatedAt));
+        recordFieldChange(id, "severity", IssueSeverity.labelOf(before.getSeverity()),
+                IssueSeverity.labelOf(severity), actorId);
+        return inlineResponse(severity, IssueSeverity.labelOf(severity), id);
     }
 
     @Override
-    public void changeStatus(Long id, String status, LocalDateTime expectedUpdatedAt, Long actorId) {
+    public IssueInlineChangeResponseDTO changePriority(
+            Long id, String priority, LocalDateTime expectedUpdatedAt, Long actorId) {
+        requireValidValue("우선순위", priority, IssuePriority.isValid(priority));
         IssueDetailResponseDTO before = getIssueDetail(id);
         requireManagePermission(before, actorId);
-        int affected = issueMapper.updateStatus(id, status, actorId, expectedUpdatedAt);
-        if (affected == 0) {
-            throw new IssueConflictException(id);
+        requireUpdated(id, issueMapper.updatePriority(id, priority, actorId, expectedUpdatedAt));
+        recordFieldChange(id, "priority", IssuePriority.labelOf(before.getPriority()),
+                IssuePriority.labelOf(priority), actorId);
+        return inlineResponse(priority, IssuePriority.labelOf(priority), id);
+    }
+
+    @Override
+    public IssueInlineChangeResponseDTO changeAssignee(
+            Long id, Long assigneeId, LocalDateTime expectedUpdatedAt, Long actorId) {
+        IssueDetailResponseDTO before = getIssueDetail(id);
+        requireAssigneeChangePermission(before, actorId, assigneeId);
+        String newAssigneeName = assigneeId == null ? "미지정" : userMapper.selectDisplayName(assigneeId);
+        if (assigneeId != null && newAssigneeName == null) {
+            throw new InvalidIssueValueException("담당자", assigneeId);
         }
+        requireUpdated(id, issueMapper.updateAssignee(id, assigneeId, actorId, expectedUpdatedAt));
+        recordFieldChange(id, "assignee_id", nullToUnspecified(before.getAssigneeName()), newAssigneeName, actorId);
+        return inlineResponse(assigneeId == null ? "" : assigneeId.toString(), newAssigneeName, id);
+    }
+
+    @Override
+    public IssueInlineChangeResponseDTO changeStatus(
+            Long id, String status, LocalDateTime expectedUpdatedAt, Long actorId) {
+        requireValidValue("상태", status, IssueStatus.isValid(status));
+        IssueDetailResponseDTO before = getIssueDetail(id);
+        requireManagePermission(before, actorId);
+        requireUpdated(id, issueMapper.updateStatus(id, status, actorId, expectedUpdatedAt));
         recordFieldChange(id, "status", IssueStatus.labelOf(before.getStatus()), IssueStatus.labelOf(status), actorId);
+        return inlineResponse(status, IssueStatus.labelOf(status), id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean canManageIssue(Long id, Long actorId) {
+        return canManage(getIssueDetail(id), actorId);
     }
 
     @Override
@@ -283,7 +319,7 @@ public class IssueServiceImpl implements IssueService {
     }
 
     /**
-     * 오류 등록자 또는 현재 처리 담당자만 본문 수정/상태변경/종료/재오픈을 할 수 있다(2026-09-14 팀 결정).
+     * 오류 등록자, 현재 처리 담당자 또는 프로젝트 담당자가 본문 수정/상태변경/종료/재오픈을 할 수 있다.
      * 담당자 재지정은 requireAssigneeChangePermission()의 별도 규칙(미지정 예외)을 따른다.
      */
     private void requireManagePermission(IssueDetailResponseDTO issue, Long actorId) {
@@ -294,7 +330,9 @@ public class IssueServiceImpl implements IssueService {
 
     private boolean canManage(IssueDetailResponseDTO issue, Long actorId) {
         return actorId != null
-                && (actorId.equals(issue.getCreatedBy()) || actorId.equals(issue.getAssigneeId()));
+                && (actorId.equals(issue.getCreatedBy())
+                || actorId.equals(issue.getAssigneeId())
+                || projectMapper.existsProjectAssignee(issue.getProjectId(), actorId));
     }
 
     /**
@@ -341,6 +379,22 @@ public class IssueServiceImpl implements IssueService {
         history.setNewValue(newValue);
         history.setActorId(actorId);
         changes.add(history);
+    }
+
+    private void requireUpdated(Long id, int affected) {
+        if (affected == 0) {
+            throw new IssueConflictException(id);
+        }
+    }
+
+    private void requireValidValue(String fieldName, Object value, boolean valid) {
+        if (!valid) {
+            throw new InvalidIssueValueException(fieldName, value);
+        }
+    }
+
+    private IssueInlineChangeResponseDTO inlineResponse(String value, String label, Long id) {
+        return new IssueInlineChangeResponseDTO(value, label, issueMapper.selectIssueUpdatedAt(id));
     }
 
     private String defaultIfBlank(String value, String defaultValue) {
