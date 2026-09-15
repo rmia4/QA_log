@@ -196,14 +196,22 @@
                             </thead>
                             <tbody>
                                 <c:forEach var="issue" items="${issues}">
+                                <c:url var="issueDetailUrl" value="/issues/${issue.id}"/>
                                     <tr class="issue-row" data-search-text="${fn:escapeXml(issue.searchText)}">
-                                        <td class="issue-number">#${empty issue.issueNumber ? issue.id : issue.issueNumber}</td>
-                                        <td class="issue-title">
-                                            <a href="<c:url value='/issues/${issue.id}' />">
+                                        <td class="issue-number issue-link-cell">
+                                        	<a href="${issueDetailUrl }">
+	                                        #${empty issue.issueNumber ? issue.id : issue.issueNumber}
+	                                        </a>
+                                        </td>
+                                       
+                                        <td class="issue-title issue-link-cell">
+                                            <a href="${issueDetailUrl }">
                                                 <span><c:out value="${empty issue.title ? '제목 없음' : issue.title}" /></span>
                                             </a>
                                         </td>
-                                        <td>
+                                        <td class="issue-status issue-link-cell">
+                       						 <a href="${issueDetailUrl }">
+                                        
                                             <span class="status status-${issue.status}">
                                                 <c:choose>
                                                     <c:when test="${issue.status == 'new'}">신규</c:when>
@@ -213,6 +221,7 @@
                                                     <c:otherwise><c:out value="${issue.status}" /></c:otherwise>
                                                 </c:choose>
                                             </span>
+                                            </a>
                                         </td>
                                         <td>
                                             <span class="severity severity-${issue.severity}">
@@ -255,6 +264,8 @@
                             </div>
                         </c:if>
                     </div>
+
+                    <nav id="issuePagination" class="issue-pagination" aria-label="오류 목록 페이지"></nav>
                 </c:when>
                 <c:otherwise>
                     <div class="workspace-empty">
@@ -453,28 +464,92 @@
             var issueSearchInput = document.getElementById('issueSearchInput');
             var issueListRequestNumber = 0;
 
-            function filterIssueList() {
+            var issuePageSize = 10;
+
+            function getPageFromUrl() {
+                var page = parseInt(new URL(window.location.href).searchParams.get('page'), 10);
+                return isNaN(page) || page < 1 ? 1 : page;
+            }
+
+            function updatePageUrl(page, historyMethod) {
+                if (!historyMethod) {
+                    return;
+                }
+
+                var url = new URL(window.location.href);
+                if (page > 1) {
+                    url.searchParams.set('page', page);
+                } else {
+                    url.searchParams.delete('page');
+                }
+                window.history[historyMethod + 'State']({ issueListView: true }, '', url.href);
+            }
+
+            function createPageButton(label, page, disabled, active) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'page-button' + (active ? ' is-active' : '');
+                button.textContent = label;
+                button.disabled = disabled;
+                if (active) {
+                    button.setAttribute('aria-current', 'page');
+                }
+                button.addEventListener('click', function () {
+                    showIssuePage(page, 'push');
+                });
+                return button;
+            }
+
+            function renderIssuePagination(currentPage, totalPages) {
+                var pagination = document.getElementById('issuePagination');
+                if (!pagination) {
+                    return;
+                }
+
+                pagination.innerHTML = '';
+                if (totalPages <= 1) {
+                    return;
+                }
+
+                pagination.appendChild(createPageButton('이전', currentPage - 1, currentPage === 1, false));
+                for (var page = 1; page <= totalPages; page++) {
+                    pagination.appendChild(createPageButton(String(page), page, false, page === currentPage));
+                }
+                pagination.appendChild(createPageButton('다음', currentPage + 1, currentPage === totalPages, false));
+            }
+
+            function showIssuePage(requestedPage, historyMethod) {
                 var issueRows = document.querySelectorAll('.issue-row');
                 var issueResultCount = document.getElementById('issueResultCount');
                 var issueSearchEmpty = document.getElementById('issueSearchEmpty');
                 var keyword = issueSearchInput ? issueSearchInput.value.trim().toLowerCase() : '';
-                var visibleIssueCount = 0;
+                var matchingRows = [];
 
                 Array.prototype.forEach.call(issueRows, function (row) {
                     var searchText = (row.getAttribute('data-search-text') || '').toLowerCase();
-                    var matches = searchText.indexOf(keyword) !== -1;
-                    row.hidden = !matches;
-                    if (matches) {
-                        visibleIssueCount++;
+                    if (searchText.indexOf(keyword) !== -1) {
+                        matchingRows.push(row);
                     }
+                    row.hidden = true;
                 });
 
+                var totalPages = Math.max(1, Math.ceil(matchingRows.length / issuePageSize));
+                var currentPage = Math.min(Math.max(requestedPage, 1), totalPages);
+                var startIndex = (currentPage - 1) * issuePageSize;
+                var endIndex = Math.min(startIndex + issuePageSize, matchingRows.length);
+                for (var index = startIndex; index < endIndex; index++) {
+                    matchingRows[index].hidden = false;
+                }
+
                 if (issueResultCount) {
-                    issueResultCount.textContent = '총 ' + visibleIssueCount + '건';
+                    issueResultCount.textContent = '총 ' + matchingRows.length + '건';
                 }
                 if (issueSearchEmpty) {
-                    issueSearchEmpty.hidden = keyword === '' || visibleIssueCount !== 0 || issueRows.length === 0;
+                    issueSearchEmpty.hidden = keyword === '' || matchingRows.length !== 0 || issueRows.length === 0;
                 }
+
+                renderIssuePagination(currentPage, matchingRows.length === 0 ? 1 : totalPages);
+                updatePageUrl(currentPage, historyMethod);
             }
 
             function replaceIssueList(responseHtml, targetUrl, addHistory, requestNumber) {
@@ -506,7 +581,7 @@
                 if (addHistory) {
                     window.history.pushState({ issueListView: true }, '', targetUrl);
                 }
-                filterIssueList();
+                showIssuePage(getPageFromUrl(), null);
             }
 
             function loadIssueList(targetUrl, addHistory) {
@@ -534,9 +609,12 @@
             }
 
             if (issueSearchInput) {
-                issueSearchInput.addEventListener('input', filterIssueList);
+                issueSearchInput.addEventListener('input', function () {
+                    showIssuePage(1, 'replace');
+                });
 
                 window.history.replaceState({ issueListView: true }, '', window.location.href);
+                showIssuePage(getPageFromUrl(), 'replace');
                 document.addEventListener('click', function (event) {
                     var target = event.target instanceof Element ? event.target : event.target.parentElement;
                     var link = target ? target.closest('a[data-issue-list-control]') : null;
