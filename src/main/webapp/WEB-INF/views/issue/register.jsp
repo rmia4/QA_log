@@ -32,7 +32,7 @@
   .panel { background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 1px 2px rgba(31,35,40,.04), 0 8px 20px rgba(31,35,40,.05); padding:8px 24px 24px; }
 
   .field { display:flex; flex-direction:column; gap:6px; padding:14px 0; border-top:1px solid var(--border); }
-  .field:first-child { border-top:none; }
+  .field:first-of-type { border-top:none; padding-top:3; }
   .field label { font-size:12.5px; font-weight:600; color:var(--ink-muted); }
   .hint { font-size:11.5px; color:var(--ink-faint); }
 
@@ -120,6 +120,25 @@
         <input type="text" name="title" placeholder="제목 (선택)">
       </div>
 
+      <div class="field row2">
+        <div>
+          <label>심각도</label>
+          <select name="severity">
+            <c:forEach var="opt" items="${severityOptions}">
+              <option value="${opt.code}">${opt.label}</option>
+            </c:forEach>
+          </select>
+        </div>
+        <div>
+          <label>우선순위</label>
+          <select name="priority">
+            <c:forEach var="opt" items="${priorityOptions}">
+              <option value="${opt.code}">${opt.label}</option>
+            </c:forEach>
+          </select>
+        </div>
+      </div>
+
       <div class="field">
         <label>발생 위치</label>
         <input type="text" name="location" placeholder="화면·기능 (선택)">
@@ -128,6 +147,17 @@
       <div class="field">
         <label>URL 주소</label>
         <input type="text" name="locationUrl" placeholder="https:// (선택)">
+      </div>
+
+      <div class="field row2">
+        <div>
+          <label>테스트 버전</label>
+          <input type="text" name="testVersion" placeholder="예: v1.4.2-rc3">
+        </div>
+        <div>
+          <label>테스트 환경</label>
+          <input type="text" name="testEnvironment" placeholder="브라우저·기기·OS">
+        </div>
       </div>
 
       <div class="field">
@@ -152,36 +182,6 @@
         <input type="file" id="fileInput-actual" name="actualResultFiles" multiple accept="image/png,image/jpeg,image/gif,image/webp" style="display:none">
         <div class="file-list" id="fileList-actual"></div>
         <div class="file-reject" id="fileReject-actual"></div>
-      </div>
-
-      <div class="field row2">
-        <div>
-          <label>테스트 버전</label>
-          <input type="text" name="testVersion" placeholder="예: v1.4.2-rc3">
-        </div>
-        <div>
-          <label>테스트 환경</label>
-          <input type="text" name="testEnvironment" placeholder="브라우저·기기·OS">
-        </div>
-      </div>
-
-      <div class="field row2">
-        <div>
-          <label>심각도</label>
-          <select name="severity">
-            <c:forEach var="opt" items="${severityOptions}">
-              <option value="${opt.code}">${opt.label}</option>
-            </c:forEach>
-          </select>
-        </div>
-        <div>
-          <label>우선순위</label>
-          <select name="priority">
-            <c:forEach var="opt" items="${priorityOptions}">
-              <option value="${opt.code}">${opt.label}</option>
-            </c:forEach>
-          </select>
-        </div>
       </div>
 
       <div class="field">
