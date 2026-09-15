@@ -26,7 +26,9 @@ public class IssueListItemDTO {
     private String status;
     private String severity;
     private String priority;
+    private Long assigneeId;
     private String assigneeName;
+    private Long createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

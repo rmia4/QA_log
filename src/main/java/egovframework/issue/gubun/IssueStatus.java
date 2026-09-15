@@ -26,6 +26,15 @@ public enum IssueStatus {
         return label;
     }
 
+    public static boolean isValid(String code) {
+        for (IssueStatus value : values()) {
+            if (value.code.equals(code)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static String labelOf(String code) {
         for (IssueStatus value : values()) {
             if (value.code.equals(code)) {

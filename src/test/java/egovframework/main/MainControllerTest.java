@@ -22,6 +22,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import egovframework.common.SessionKeys;
 import egovframework.issue.dto.IssueListItemDTO;
+import egovframework.issue.gubun.IssuePriority;
+import egovframework.issue.gubun.IssueSeverity;
+import egovframework.issue.gubun.IssueStatus;
 import egovframework.issue.service.IssueListService;
 import egovframework.main.controller.MainController;
 import egovframework.project.gubun.ProjectStatus;
@@ -142,6 +145,15 @@ public class MainControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("sort", "updatedAt"))
                 .andExpect(model().attribute("direction", "asc"));
+    }
+
+    @Test
+    public void issueInlineEditorsReceiveAllStatusSeverityAndPriorityOptions() throws Exception {
+        mockMvc.perform(get("/").session(loggedInSession()))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("issueStatusOptions", asList(IssueStatus.values())))
+                .andExpect(model().attribute("issueSeverityOptions", asList(IssueSeverity.values())))
+                .andExpect(model().attribute("issuePriorityOptions", asList(IssuePriority.values())));
     }
 
     @Test

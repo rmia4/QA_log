@@ -76,12 +76,12 @@ public class IssueViewController {
         model.addAttribute("statusOptions", Arrays.asList(IssueStatus.NEW, IssueStatus.REVIEWING, IssueStatus.FIXING));
         model.addAttribute("conflict", conflict != null);
         model.addAttribute("forbidden", forbidden != null);
-        // 오류 등록자/처리 담당자만 본문 수정·상태변경·종료·재오픈이 가능(2026-09-14 팀 결정) - 그 외에는
+        // 오류 등록자/처리 담당자/프로젝트 담당자가 본문 수정·상태변경·종료·재오픈 가능 - 그 외에는
         // 관련 버튼/폼 자체를 화면에서 숨긴다. canClaimAssignee는 담당자가 아직 없는(미지정) 오류에 한해
         // 누구나 자기 자신을 담당자로 지정할 수 있는 예외(IssueServiceImpl.requireAssigneeChangePermission 참고).
         // 댓글은 프로젝트 담당자 여부와 무관하게 로그인한 전원이 작성 가능(2026-09-14 재확인 - 동기
         // 브랜치 병합 중 "프로젝트 담당자만 댓글 가능"으로 바뀌어 있던 걸 원래 정책으로 되돌림).
-        boolean canManage = canManage(issue, actorId);
+        boolean canManage = issueService.canManageIssue(id, actorId);
         model.addAttribute("canManage", canManage);
         model.addAttribute("canClaimAssignee", canManage || issue.getAssigneeId() == null);
         return "issue/detail";
@@ -95,7 +95,7 @@ public class IssueViewController {
             return "redirect:/login";
         }
         IssueDetailResponseDTO issue = issueService.getIssueDetail(id);
-        if (!canManage(issue, actorId)) {
+        if (!issueService.canManageIssue(id, actorId)) {
             return "redirect:/issues/" + id + "?forbidden=true";
         }
         model.addAttribute("issue", issue);
@@ -244,12 +244,6 @@ public class IssueViewController {
             return "redirect:/issues/" + id + "?forbidden=true";
         }
         return "redirect:/issues/" + id;
-    }
-
-    /** 오류 등록자 또는 현재 처리 담당자인지 - IssueServiceImpl.canManage()와 동일 규칙(간단해서 중복 허용). */
-    private boolean canManage(IssueDetailResponseDTO issue, Long actorId) {
-        return actorId != null
-                && (actorId.equals(issue.getCreatedBy()) || actorId.equals(issue.getAssigneeId()));
     }
 
     /** updateIssueFields()가 IOException(체크 예외)을 던지므로 Runnable 대신 이걸 쓴다. */

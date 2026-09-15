@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import egovframework.common.SessionKeys;
+import egovframework.issue.gubun.IssuePriority;
+import egovframework.issue.gubun.IssueSeverity;
+import egovframework.issue.gubun.IssueStatus;
 import egovframework.issue.service.IssueListService;
 import egovframework.project.service.ProjectService;
 import egovframework.project.gubun.ProjectStatus;
@@ -65,6 +68,9 @@ public class MainController {
         model.addAttribute("projectCountsByStatus", projectCountsByStatus);
         model.addAttribute("projectListStatuses", java.util.Arrays.asList(ProjectStatus.values()));
         model.addAttribute("projectStatusOptions", ProjectStatus.activeValues());
+        model.addAttribute("issueStatusOptions", java.util.Arrays.asList(IssueStatus.values()));
+        model.addAttribute("issueSeverityOptions", java.util.Arrays.asList(IssueSeverity.values()));
+        model.addAttribute("issuePriorityOptions", java.util.Arrays.asList(IssuePriority.values()));
         String listMode = "closed".equals(view) ? "closed" : "active";
         String sortMode = "createdAt".equals(sort) ? "createdAt"
                 : ("updatedAt".equals(sort) ? "updatedAt"
