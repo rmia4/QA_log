@@ -32,7 +32,7 @@
   .panel { background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 1px 2px rgba(31,35,40,.04), 0 8px 20px rgba(31,35,40,.05); padding:8px 24px 24px; }
 
   .field { display:flex; flex-direction:column; gap:6px; padding:14px 0; border-top:1px solid var(--border); }
-  .field:first-child { border-top:none; }
+  .field:first-of-type { border-top:none; padding-top:0; }
   .field label { font-size:12.5px; font-weight:600; color:var(--ink-muted); }
   .hint { font-size:11.5px; color:var(--ink-faint); }
 
