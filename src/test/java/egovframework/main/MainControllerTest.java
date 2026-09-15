@@ -133,6 +133,18 @@ public class MainControllerTest {
     }
 
     @Test
+    public void requestedUpdatedDateAscendingSortIsKeptInModel() throws Exception {
+        mockMvc.perform(get("/")
+                .param("projectId", "22")
+                .param("sort", "updatedAt")
+                .param("direction", "asc")
+                .session(loggedInSession()))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("sort", "updatedAt"))
+                .andExpect(model().attribute("direction", "asc"));
+    }
+
+    @Test
     public void projectFormsOnlyReceiveActiveStatusOptions() throws Exception {
         mockMvc.perform(get("/").session(loggedInSession()))
                 .andExpect(status().isOk())

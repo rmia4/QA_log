@@ -44,6 +44,7 @@
         ORDER BY
         <choose>
             <when test="sort == 'createdAt'">i.created_at</when>
+            <when test="sort == 'updatedAt'">i.updated_at</when>
             <when test="sort == 'priority'">
                 CASE i.priority
                     WHEN 'urgent' THEN 4

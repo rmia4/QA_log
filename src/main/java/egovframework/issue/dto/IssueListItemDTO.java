@@ -33,6 +33,9 @@ public class IssueListItemDTO {
     public String getCreatedAtDisplay() {
         return KoreanDateTime.format(createdAt);
     }
+    public String getUpdatedAtDisplay() {
+        return KoreanDateTime.format(updatedAt);
+    }
 
     public String getSearchText() {
         StringBuilder searchText = new StringBuilder();

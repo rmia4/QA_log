@@ -167,6 +167,12 @@
                                     <c:param name="sort" value="createdAt" />
                                     <c:param name="direction" value="${sort == 'createdAt' && direction == 'desc' ? 'asc' : 'desc'}" />
                                 </c:url>
+                                <c:url var="updatedAtSortUrl" value="/">
+                                    <c:param name="projectId" value="${selectedProjectId}" />
+                                    <c:param name="view" value="${listMode}" />
+                                    <c:param name="sort" value="updatedAt" />
+                                    <c:param name="direction" value="${sort == 'updatedAt' && direction == 'desc' ? 'asc' : 'desc'}" />
+                                </c:url>
                                 <a class="sort-button ${sort == 'severity' ? 'is-active' : ''}" href="${severitySortUrl}" data-issue-list-control>
                                     심각도 <span aria-hidden="true">${sort == 'severity' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
                                 </a>
@@ -174,7 +180,10 @@
                                     우선순위 <span aria-hidden="true">${sort == 'priority' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
                                 </a>
                                 <a class="sort-button ${sort == 'createdAt' ? 'is-active' : ''}" href="${createdAtSortUrl}" data-issue-list-control>
-                                    추가 날짜 <span aria-hidden="true">${sort == 'createdAt' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
+                                    등록일 <span aria-hidden="true">${sort == 'createdAt' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
+                                </a>
+                                <a class="sort-button ${sort == 'updatedAt' ? 'is-active' : ''}" href="${updatedAtSortUrl}" data-issue-list-control>
+                                    수정일 <span aria-hidden="true">${sort == 'updatedAt' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
                                 </a>
                             </div>
                             <span id="issueResultCount" class="result-count">총 ${fn:length(issues)}건</span>
@@ -192,6 +201,7 @@
                                     <th>우선순위</th>
                                     <th>담당자</th>
                                     <th>등록일</th>
+                                    <th>수정일</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -247,6 +257,7 @@
                                         </td>
                                         <td><c:out value="${empty issue.assigneeName ? '미지정' : issue.assigneeName}" /></td>
                                         <td class="updated-at"><c:out value="${issue.createdAtDisplay}" /></td>
+                                        <td class="updated-at"><c:out value="${issue.updatedAtDisplay}" /></td>
                                     </tr>
                                 </c:forEach>
                             </tbody>
