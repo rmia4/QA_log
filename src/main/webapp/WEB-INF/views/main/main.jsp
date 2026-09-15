@@ -124,7 +124,7 @@
                     </div>
 
                     <div class="issue-toolbar">
-                        <div class="tabs" role="tablist" aria-label="오류 상태 구분">
+                        <div id="issueStatusTabs" class="tabs" role="tablist" aria-label="오류 상태 구분">
                             <c:url var="activeUrl" value="/">
                                 <c:param name="projectId" value="${selectedProjectId}" />
                                 <c:param name="view" value="active" />
@@ -138,9 +138,9 @@
                                 <c:param name="direction" value="${direction}" />
                             </c:url>
                             <a href="${activeUrl}" class="tab ${listMode == 'active' ? 'is-active' : ''}" role="tab"
-                               aria-selected="${listMode == 'active'}">진행 중</a>
+                               aria-selected="${listMode == 'active'}" data-issue-list-control>진행 중</a>
                             <a href="${closedUrl}" class="tab ${listMode == 'closed' ? 'is-active' : ''}" role="tab"
-                               aria-selected="${listMode == 'closed'}">종료됨</a>
+                               aria-selected="${listMode == 'closed'}" data-issue-list-control>종료됨</a>
                         </div>
                         <div class="issue-toolbar-meta">
                             <label class="search-box issue-search-box">
@@ -148,7 +148,7 @@
                                 <input id="issueSearchInput" class="search-input" type="search"
                                        placeholder="오류 검색" autocomplete="off" aria-label="오류 검색">
                             </label>
-                            <div class="sort-controls" aria-label="오류 목록 정렬">
+                            <div id="issueSortControls" class="sort-controls" aria-label="오류 목록 정렬">
                                 <c:url var="severitySortUrl" value="/">
                                     <c:param name="projectId" value="${selectedProjectId}" />
                                     <c:param name="view" value="${listMode}" />
@@ -167,13 +167,13 @@
                                     <c:param name="sort" value="createdAt" />
                                     <c:param name="direction" value="${sort == 'createdAt' && direction == 'desc' ? 'asc' : 'desc'}" />
                                 </c:url>
-                                <a class="sort-button ${sort == 'severity' ? 'is-active' : ''}" href="${severitySortUrl}">
+                                <a class="sort-button ${sort == 'severity' ? 'is-active' : ''}" href="${severitySortUrl}" data-issue-list-control>
                                     심각도 <span aria-hidden="true">${sort == 'severity' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
                                 </a>
-                                <a class="sort-button ${sort == 'priority' ? 'is-active' : ''}" href="${prioritySortUrl}">
+                                <a class="sort-button ${sort == 'priority' ? 'is-active' : ''}" href="${prioritySortUrl}" data-issue-list-control>
                                     우선순위 <span aria-hidden="true">${sort == 'priority' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
                                 </a>
-                                <a class="sort-button ${sort == 'createdAt' ? 'is-active' : ''}" href="${createdAtSortUrl}">
+                                <a class="sort-button ${sort == 'createdAt' ? 'is-active' : ''}" href="${createdAtSortUrl}" data-issue-list-control>
                                     추가 날짜 <span aria-hidden="true">${sort == 'createdAt' ? (direction == 'desc' ? '↓' : '↑') : '↕'}</span>
                                 </a>
                             </div>
@@ -181,7 +181,7 @@
                         </div>
                     </div>
 
-                    <div class="issue-table-wrap">
+                    <div id="issueTableWrap" class="issue-table-wrap">
                         <table class="issue-table">
                             <thead>
                                 <tr>
@@ -451,25 +451,110 @@
             });
 
             var issueSearchInput = document.getElementById('issueSearchInput');
-            var issueRows = document.querySelectorAll('.issue-row');
-            var issueResultCount = document.getElementById('issueResultCount');
-            var issueSearchEmpty = document.getElementById('issueSearchEmpty');
-            if (issueSearchInput) {
-                issueSearchInput.addEventListener('input', function () {
-                    var keyword = issueSearchInput.value.trim().toLowerCase();
-                    var visibleIssueCount = 0;
+            var issueListRequestNumber = 0;
 
-                    Array.prototype.forEach.call(issueRows, function (row) {
-                        var searchText = row.getAttribute('data-search-text').toLowerCase();
-                        var matches = searchText.indexOf(keyword) !== -1;
-                        row.hidden = !matches;
-                        if (matches) {
-                            visibleIssueCount++;
-                        }
-                    });
+            function filterIssueList() {
+                var issueRows = document.querySelectorAll('.issue-row');
+                var issueResultCount = document.getElementById('issueResultCount');
+                var issueSearchEmpty = document.getElementById('issueSearchEmpty');
+                var keyword = issueSearchInput ? issueSearchInput.value.trim().toLowerCase() : '';
+                var visibleIssueCount = 0;
 
+                Array.prototype.forEach.call(issueRows, function (row) {
+                    var searchText = (row.getAttribute('data-search-text') || '').toLowerCase();
+                    var matches = searchText.indexOf(keyword) !== -1;
+                    row.hidden = !matches;
+                    if (matches) {
+                        visibleIssueCount++;
+                    }
+                });
+
+                if (issueResultCount) {
                     issueResultCount.textContent = '총 ' + visibleIssueCount + '건';
+                }
+                if (issueSearchEmpty) {
                     issueSearchEmpty.hidden = keyword === '' || visibleIssueCount !== 0 || issueRows.length === 0;
+                }
+            }
+
+            function replaceIssueList(responseHtml, targetUrl, addHistory, requestNumber) {
+                if (requestNumber !== issueListRequestNumber) {
+                    return;
+                }
+
+                var nextDocument = new DOMParser().parseFromString(responseHtml, 'text/html');
+                var currentTabs = document.getElementById('issueStatusTabs');
+                var currentSortControls = document.getElementById('issueSortControls');
+                var currentResultCount = document.getElementById('issueResultCount');
+                var currentTableWrap = document.getElementById('issueTableWrap');
+                var nextTabs = nextDocument.getElementById('issueStatusTabs');
+                var nextSortControls = nextDocument.getElementById('issueSortControls');
+                var nextResultCount = nextDocument.getElementById('issueResultCount');
+                var nextTableWrap = nextDocument.getElementById('issueTableWrap');
+
+                if (!currentTabs || !currentSortControls || !currentResultCount || !currentTableWrap
+                        || !nextTabs || !nextSortControls || !nextResultCount || !nextTableWrap) {
+                    throw new Error('오류 목록 영역을 찾을 수 없습니다.');
+                }
+
+                currentTabs.innerHTML = nextTabs.innerHTML;
+                currentSortControls.innerHTML = nextSortControls.innerHTML;
+                currentResultCount.textContent = nextResultCount.textContent;
+                currentTableWrap.innerHTML = nextTableWrap.innerHTML;
+                currentTableWrap.removeAttribute('aria-busy');
+
+                if (addHistory) {
+                    window.history.pushState({ issueListView: true }, '', targetUrl);
+                }
+                filterIssueList();
+            }
+
+            function loadIssueList(targetUrl, addHistory) {
+                var requestNumber = ++issueListRequestNumber;
+                var tableWrap = document.getElementById('issueTableWrap');
+                if (tableWrap) {
+                    tableWrap.setAttribute('aria-busy', 'true');
+                }
+
+                window.fetch(targetUrl, {
+                    credentials: 'same-origin',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                }).then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('오류 목록을 불러오지 못했습니다.');
+                    }
+                    return response.text();
+                }).then(function (responseHtml) {
+                    replaceIssueList(responseHtml, targetUrl, addHistory, requestNumber);
+                }).catch(function () {
+                    if (requestNumber === issueListRequestNumber) {
+                        window.location.assign(targetUrl);
+                    }
+                });
+            }
+
+            if (issueSearchInput) {
+                issueSearchInput.addEventListener('input', filterIssueList);
+
+                window.history.replaceState({ issueListView: true }, '', window.location.href);
+                document.addEventListener('click', function (event) {
+                    var target = event.target instanceof Element ? event.target : event.target.parentElement;
+                    var link = target ? target.closest('a[data-issue-list-control]') : null;
+                    if (!link || event.defaultPrevented || event.button !== 0
+                            || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    loadIssueList(link.href, true);
+                });
+
+                window.addEventListener('popstate', function (event) {
+                    if (event.state && event.state.issueListView) {
+                        loadIssueList(window.location.href, false);
+                    } else {
+                        window.location.reload();
+                    }
                 });
             }
         }());
