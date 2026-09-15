@@ -215,15 +215,16 @@
           </c:when>
           <c:when test="${canClaimAssignee}">
             <%-- 담당자 미지정 상태의 예외 - 등록자/담당자가 아니어도 자기 자신만 담당자로 지정 가능
-                 (등록자·담당자가 둘 다 자리를 비워 오류가 영원히 미지정으로 남는 것을 막기 위함) --%>
+                 (등록자·담당자가 둘 다 자리를 비워 오류가 영원히 미지정으로 남는 것을 막기 위함).
+                 예전엔 select에 "미지정"이 기본 선택돼 있어서 버튼만 누르면 assigneeId=""가
+                 그대로 제출돼 403(등록자/담당자 아님)으로 거부됐다 - 선택지를 없애고 항상
+                 본인으로 제출되도록 수정(2026-09-15). --%>
             <form class="assignee-form" action="${ctx}/issues/${issue.id}/assignee" method="post">
               <div class="meta-item">
                 <span class="k">현재 처리 담당자</span>
-                <select name="assigneeId">
-                  <option value="" selected>미지정</option>
-                  <option value="${sessionScope.LOGIN_USER_ID}">${fn:escapeXml(sessionScope.loginDisplayName)}(나)</option>
-                </select>
+                <span class="v">미지정</span>
               </div>
+              <input type="hidden" name="assigneeId" value="${sessionScope.LOGIN_USER_ID}">
               <input type="hidden" name="expectedUpdatedAt" value="${issue.updatedAt}">
               <button type="submit" class="btn">내가 맡기</button>
             </form>
